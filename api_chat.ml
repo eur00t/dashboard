@@ -144,5 +144,3 @@ let make_single_chat_module ?(name="default") chat_id =
         let test peer_id = (peer_id = get_chat_id chat_id)
         let name = name
     end: Api_chat_config);;
-
-module Chat = Make_api_chat((val (make_single_chat_module 8)));;

@@ -98,7 +98,7 @@ let rec initiate_long_poll_connection key server ts =
             else Data ((ts_ |> to_int), updates) in
         return res
     >>= function
-         | Reconnect ts -> initiate_long_poll_connection key server ts
+        | Reconnect ts -> initiate_long_poll_connection key server ts
         | Restart Some ts -> connect_to_long_poll_server ~ts_override:ts ()
         | Restart None -> connect_to_long_poll_server ()
         | Data (ts, updates) ->

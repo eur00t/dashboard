@@ -1,7 +1,7 @@
 open Core.Std;;
 open Async.Std;;
 
-module type Api_Module = sig
+module type Api_module = sig
     val do_request: string ->
         (string * string) list ->
         (Yojson.Safe.json, Error.t) Result.t
@@ -17,7 +17,7 @@ type api_config = {
     api_url: string
 } [@@deriving of_yojson];;
 
-module type Api_Config_Module = sig
+module type Api_config_module = sig
     val access_token: string
     val api_version: string
     val api_url: string
@@ -28,9 +28,9 @@ let makeConfigModule { access_token; api_version; api_url } =
         let access_token = access_token
         let api_version = api_version
         let api_url = api_url
-    end: Api_Config_Module);;
+    end: Api_config_module);;
 
-module Make_Api (Config: Api_Config_Module): Api_Module = struct
+module Make_api (Config: Api_config_module): Api_module = struct
     type api_error = {
         error_code: int;
         error_msg: string
@@ -79,7 +79,7 @@ let get_api_config_from_file file_name =
     let config_str = In_channel.input_all config_file in
     api_config_of_yojson (Yojson.Safe.from_string config_str);;
 
-include Make_Api(
+include Make_api(
     (val (makeConfigModule (match get_api_config_from_file "config.json" with
         | Ok v -> v
         | Error _ -> failwith "Can't read config.json")))

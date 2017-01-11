@@ -1,4 +1,4 @@
 S ./
-PKG core cohttp cohttp.async yojson ppx_sexp_conv ppx_deriving_yojson
+PKG core cohttp cohttp.async yojson ppx_sexp_conv ppx_deriving_yojson ppx_here
 B _build
 B +threads

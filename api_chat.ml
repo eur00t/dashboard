@@ -2,11 +2,14 @@ open Core.Std;;
 open Async.Std;;
 
 module type Api_chat_config = sig
+    val name: string
     val test: int -> bool
 end;;
 
 module type Api_chat = sig
+    module Config: Api_chat_config
     val start: unit -> unit
+    val subscribe: (Chat_message.t -> unit) -> (Chat_message.t -> unit) Core.Std.Bus.Subscriber.t
 end;;
 
 module Make_api_chat (Config: Api_chat_config): Api_chat = struct
@@ -15,6 +18,14 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
         server: string;
         ts: int
     } [@@deriving of_yojson { strict = false }]
+
+    module Config = Config;;
+
+    let bus =
+    let open Core.Std.Bus in
+    create [%here] Callback_arity.Arity1
+        ~allow_subscription_after_first_write:false
+        ~on_callback_raise: (fun err -> ());;
 
     let result_to_or_error value =
         let module R = Ppx_deriving_yojson_runtime.Result in
@@ -42,32 +53,18 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
             | 4 -> Message json
             | _ -> Other json;;
 
-    let process_xxlv_chat_message ~id ~time ~text ~from =
-        let open Option in
-        text >>= fun text_ ->
-        from >>= fun from_ ->
-        Chat.process_message ~id ~time ~text:text_ ~from:from_;
+    let process_chat_message msg =
+        Core.Std.Bus.write bus msg;
         return ();;
 
-    let process_chat_message ~id ~peer_id ~time ~text ~from =
-        let open Option in
-        peer_id
-        >>= fun peer_id_ ->
-            if Config.test peer_id_
-                then process_xxlv_chat_message ~id ~time ~text ~from
-                else return ();;
+    let process_chat_message msg =
+        match Chat_message.test_peer_id msg Config.test with
+            | Some true -> process_chat_message msg
+            | Some false | None -> return ();;
 
     let process_update_variant = function
-        | Message json ->
-            let open Yojson.Basic.Util in
-            process_chat_message
-                ~id:(json |> index 1 |> to_int_option)
-                ~peer_id:(json |> index 3 |> to_int_option)
-                ~time:(json |> index 4 |> to_int)
-                ~text:(json |> index 6 |> to_string_option)
-                ~from:(json |> index 7 |> member "from" |> to_string_option)
-
-        | Other _ -> None;;
+        | Message json -> process_chat_message (Chat_message.create json)
+        | Other _ -> return ();;
 
     let process_updates updates =
         let open Yojson.Basic.Util in
@@ -135,13 +132,17 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
 
     let start () =
         ignore ((print_defferred_or_error_json (connect_to_long_poll_server ())): unit Deferred.t)
+
+    let subscribe callback =
+        Core.Std.Bus.subscribe_exn (Core.Std.Bus.read_only bus) [%here] ~f:callback;;
 end;;
 
 let get_chat_id id = 2000000000 + id;;
 
-let make_single_chat_module chat_id =
+let make_single_chat_module ?(name="default") chat_id =
     (module struct
         let test peer_id = (peer_id = get_chat_id chat_id)
+        let name = name
     end: Api_chat_config);;
 
 module Chat = Make_api_chat((val (make_single_chat_module 8)));;

@@ -59,12 +59,27 @@ module Make_api (Config: Api_config_module): Api_module = struct
             | Error err -> Or_error.error_string ("Wrong API response: " ^ err)
             | Ok { error = None; response = None } -> Or_error.error_string "Wrong API response";;
 
-    let do_request_inner ?add_params url additional_params =
-        let url = Uri.of_string (url)
+    let rec do_request_raw ?add_params ?(retry_after=2.0) url additional_params =
+        let url_ = Uri.of_string (url)
             |> (match add_params with | Some funct -> funct | None -> ident)
             |> add_query_params additional_params in
         (*printf "Doing request: %s\n" (Uri.to_string url);*)
-        Cohttp_async.Client.get url
+        Cohttp_async.Client.get url_
+        >>= fun (response, body) ->
+            match Cohttp.Code.code_of_status (Cohttp_async.Response.status response) with
+                | 200 -> return (response, body)
+                | _ ->
+                    printf "Error with request: %s\nRetry in: %fs\n" (Uri.to_string url_) retry_after;
+                    after (Time.Span.of_sec retry_after)
+                    >>= fun () ->
+                    do_request_raw
+                        ?add_params
+                        ~retry_after:(retry_after *. 2.0)
+                        url
+                        additional_params;;
+
+    let do_request_inner ?add_params url additional_params =
+        do_request_raw ?add_params url additional_params
         >>= fun (_, body) -> Cohttp_async.Body.to_string body
         >>= fun str -> return (Yojson.Safe.from_string str)
 

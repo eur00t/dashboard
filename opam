@@ -1,0 +1,13 @@
+opam-version: "1.2"
+name: "xxlv"
+version: "~unknown"
+maintainer: "Taras Yevtushenko <taras.evt@gmail.com>"
+authors: "Taras Yevtushenko <taras.evt@gmail.com>"
+build: [
+  [make build]
+]
+install: []
+remove: ["ocamlfind" "remove" "xxlv"]
+depends: [
+  "ocamlfind" "ppx_here" "ppx_deriving_yojson" "cohttp" "async" "async_ssl"
+]

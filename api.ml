@@ -23,7 +23,7 @@ module type Api_config_module = sig
     val api_url: string
 end;;
 
-let makeConfigModule { access_token; api_version; api_url } =
+let make_config_module { access_token; api_version; api_url } =
     (module struct
         let access_token = access_token
         let api_version = api_version
@@ -95,7 +95,7 @@ let get_api_config_from_file file_name =
     api_config_of_yojson (Yojson.Safe.from_string config_str);;
 
 include Make_api(
-    (val (makeConfigModule (match get_api_config_from_file "config.json" with
+    (val (make_config_module (match get_api_config_from_file "config.json" with
         | Ok v -> v
         | Error _ -> failwith "Can't read config.json")))
 );;

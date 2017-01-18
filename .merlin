@@ -1,4 +1,7 @@
 S ./
+S shared0
 PKG core cohttp cohttp.async yojson ppx_sexp_conv ppx_deriving_yojson ppx_here
+PKG websocket
 B _build
+B _build/shared0
 B +threads

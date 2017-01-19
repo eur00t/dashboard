@@ -10,4 +10,5 @@ install: []
 remove: ["ocamlfind" "remove" "xxlv"]
 depends: [
   "ocamlfind" "ppx_here" "ppx_deriving_yojson" "cohttp" "async" "async_ssl"
+  "websocket"
 ]

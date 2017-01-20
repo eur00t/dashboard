@@ -27,16 +27,10 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
         ~allow_subscription_after_first_write:false
         ~on_callback_raise: (fun err -> ());;
 
-    let result_to_or_error value =
-        let module R = Ppx_deriving_yojson_runtime.Result in
-        match value with
-            | R.Ok value -> Ok value
-            | R.Error str -> Or_error.error_string str;;
-
     let get_long_poll_server () =
         let open Deferred.Or_error.Monad_infix in
         Api.do_request "messages.getLongPollServer" [("ssl", "1")]
-        >>= fun response -> return (result_to_or_error (get_long_poll_server_response_of_yojson response));;
+        >>= fun response -> return (Util.result_to_or_error (get_long_poll_server_response_of_yojson response));;
 
     type long_poll_message =
         | Reconnect of int

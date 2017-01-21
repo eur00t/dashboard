@@ -1,5 +1,6 @@
 open Core.Std;;
 open Async.Std;;
+open Message_processor;;
 
 let xxlv_chat_id = 8;;
 let test_chat_id = 18;;
@@ -16,16 +17,18 @@ let subscribe_simple_printer (module ChatModule: Api_chat.Api_chat) =
         ignore ((Chat.process_message msg ChatModule.Config.name): unit option);
         ());;
 
-let handler msg =
-    let open Api_types in
-    match msg with
-        | Initial_request num -> Initial_response { Initial_response.test = num + 1 };;
+let subscribe_dispatcher (module ChatModule: Api_chat.Api_chat) ws_server =
+    ChatModule.subscribe (fun msg ->
+        Dispatcher_server.Server.process_message
+            ws_server
+            Dispatcher_server.server
+            msg);;
 
 let () =
     Log.Global.set_level `Debug;
     let ws_server = App_websocket.start
         ~url: "ws://localhost:8081/api"
-        ~handler: (Api_types.server_handler ~handler: handler) in
+        ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server)) in
 
     (*let rec poll () =
         after (Time.Span.of_sec 5.0)
@@ -36,6 +39,7 @@ let () =
     ignore (poll ());*)
     ignore (subscribe_simple_printer (module XxlvChat));
     ignore (subscribe_simple_printer (module TestChat));
+    ignore (subscribe_dispatcher (module TestChat) ws_server);
 
     (*XxlvChat.start ();*)
     TestChat.start ();

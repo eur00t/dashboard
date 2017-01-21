@@ -1,6 +1,3 @@
-open Core.Std;;
-open Async.Std;;
-
 type t = {
     id: int option;
     peer_id: int option;
@@ -20,9 +17,9 @@ let create json =
     };;
 
 let test_peer_id msg test =
-    let open Option in
-    msg.peer_id
-    >>| fun peer_id_ -> test peer_id_;;
+    match msg.peer_id with
+        | Some peer_id_-> Some (test peer_id_)
+        | None -> None
 
 let get_time msg = msg.time;;
 let get_from msg = msg.from;;

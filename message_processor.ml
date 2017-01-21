@@ -1,14 +1,17 @@
 module Client_payload = struct
     type t =
-        | Full of { name: string option }
-        | Update of { name: string option; version: int }
+        | Full of string (* name *)
+        | Update of string * int (* name, version *)
+    [@@deriving yojson]
 end
 
 module Server_payload = struct
     type t =
-        | Full of { name: string; version: int; data: Yojson.Safe.json }
-        | Update of { name: string; version: int; data: Yojson.Safe.json }
-end
+        | Full of string * int * Yojson.Safe.json (* name, version, data *)
+        | Update of string * int * Yojson.Safe.json (* name, version, data *)
+        | Empty
+    [@@deriving yojson]
+end;;
 
 module type Processor_core = sig
     val name: string
@@ -26,6 +29,7 @@ end
 
 module type Processor = sig
     type config
+    val name: string
 
     module Server: sig
         type t
@@ -34,6 +38,7 @@ module type Processor = sig
 
     module Client: sig
         type t
+        val print_state: t -> unit
         val create: config -> t
     end
 
@@ -45,6 +50,7 @@ end
 
 module Make_processor (Core: Processor_core) = struct
     type config = Core.config
+    let name = Core.name
 
     module Server = struct
         type t = {
@@ -67,6 +73,10 @@ module Make_processor (Core: Processor_core) = struct
             version: int
         }
 
+        let print_state t =
+            print_string (Yojson.Safe.to_string (Core.client_state_to_yojson t.state));
+            flush_all ()
+
         let create config = {
             c = config;
             state = Core.client_state_empty config;
@@ -84,11 +94,11 @@ module Make_processor (Core: Processor_core) = struct
 
     let get_full_server_payload t =
         let open Server_payload in
-        Full {
-            name = Core.name;
-            version = t.Server.version;
-            data = Core.client_state_to_yojson (Core.client_state_from_server_state t.Server.state)
-        }
+        Full (
+            Core.name,
+            t.Server.version,
+            Core.client_state_to_yojson (Core.client_state_from_server_state t.Server.state)
+        )
 
     let update_client_state t json version =
         if t.Client.version <> version - 1 then Error "Version mismatch"
@@ -108,21 +118,23 @@ module Make_processor (Core: Processor_core) = struct
             t with
             Server.state; version
         },
-        Update {
-            name = Core.name;
-            version;
-            data = Core.update_to_yojson update
-        }
+        Update (
+            Core.name,
+            version,
+            Core.update_to_yojson update
+        )
 end
 
 module type Processor_server_inst = sig
     module Processor: Processor
-    val server: Processor.Server.t
+    val update: Processor.Server.t -> unit
+    val server: Processor.Server.t ref
 end;;
 
 module type Processor_client_inst = sig
     module Processor: Processor
-    val client: Processor.Client.t
+    val update: Processor.Client.t -> unit
+    val client: Processor.Client.t ref
 end;;
 
 let create_processor_server_inst
@@ -131,7 +143,8 @@ let create_processor_server_inst
         config =
     (module struct
         module Processor = P
-        let server = Processor.Server.create config
+        let server = ref (Processor.Server.create config)
+        let update t = server := t
     end: Processor_server_inst)
 
 let create_processor_client_inst
@@ -140,7 +153,10 @@ let create_processor_client_inst
         config =
     (module struct
         module Processor = P
-        let client = Processor.Client.create config
+        let client = ref (Processor.Client.create config)
+        let update t =
+            client := t;
+            Processor.Client.print_state t;
     end: Processor_client_inst)
 
 module Total_count_processor_core = struct
@@ -161,7 +177,7 @@ module Total_count_processor_core = struct
             let delta_ref = ref 1 in
             while (
                 (not (Queue.is_empty q)) &&
-                ((Queue.peek q) - time) <= interval_s
+                (time - (Queue.peek q)) > interval_s
             ) do
                 ignore (Queue.take q);
                 delta_ref := !delta_ref - 1;
@@ -171,8 +187,4 @@ module Total_count_processor_core = struct
         q, delta
 end
 
-module Total_count_Processor = Make_processor(Total_count_processor_core)
-
-let module2 = [
-    create_processor_server_inst (module Total_count_Processor: (Processor with type config = Total_count_processor_core.config)) { interval_s = 100 }
-]
+module Total_count_processor = Make_processor(Total_count_processor_core)

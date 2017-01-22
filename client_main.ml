@@ -19,3 +19,7 @@ ws##.onmessage := Dom.handler begin
         Api_types.client_handler data ~handler: (Dispatcher_client.Client.process_server_payload Dispatcher_client.client ws);
         Js._true
 end;;
+
+Dispatcher_client.Client.render
+    Dispatcher_client.client
+    "container";;

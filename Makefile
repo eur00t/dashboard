@@ -1,6 +1,6 @@
 # Makefile
 build:
-	ocamlbuild -Is shared0 -use-ocamlfind -tag thread \
+	ocamlbuild -Is shared0,processors -use-ocamlfind -tag thread \
 	-pkg core \
 	-pkg cohttp \
 	-pkg cohttp.async \
@@ -15,21 +15,23 @@ clean:
 	ocamlbuild -clean
 
 buildjs:
-	ocamlbuild -Is shared0 -use-ocamlfind -tag thread \
+	ocamlbuild -Is shared0,processors -use-ocamlfind -tag thread \
 	-pkg js_of_ocaml \
 	-pkg ppx_deriving_yojson \
 	-pkg js_of_ocaml.ppx \
+	-pkg reactjs \
 	-cflag -g \
-	client.d.byte
-	js_of_ocaml --pretty --no-inline --debug-info --source-map +nat.js client.d.byte
+	client_main.d.byte
+	js_of_ocaml --pretty --no-inline --debug-info --source-map +nat.js client_main.d.byte
 
 buildjs_prod:
-	ocamlbuild -Is shared0 -use-ocamlfind -tag thread \
+	ocamlbuild -Is shared0,processors -use-ocamlfind -tag thread \
 	-pkg js_of_ocaml \
 	-pkg ppx_deriving_yojson \
 	-pkg js_of_ocaml.ppx \
+	-pkg reactjs \
 	-cflag -g \
-	client.d.byte
-	js_of_ocaml --opt 3 +nat.js client.d.byte
+	client_main.d.byte
+	js_of_ocaml --opt 3 +nat.js client_main.d.byte
 
 .PHONY: build clean

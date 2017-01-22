@@ -1,9 +1,12 @@
 module M_p = Message_processor
+module M_p_c = Message_processor_client
 
 module type Processor_client_inst = sig
-    module Processor: M_p.Processor
+    module Processor: M_p_c.Processor
     val update: Processor.Client.t -> unit
+    val update_bus: Processor.Client.t Bus.t
     val client: Processor.Client.t ref
+    val react_class: Reactjs.Low_level_bindings.react_class Js.t
 end;;
 
 module Client = struct
@@ -54,20 +57,41 @@ module Client = struct
                     Not_found -> Error ("Can't find processor " ^ name)
             end
             | M_p.Server_payload.Empty -> Ok ()
+
+    let render_processor (module M: Processor_client_inst) =
+        let open Reactjs in
+        Elem (create_element_from_class M.react_class)
+
+    let render t container_id =
+        let open Reactjs in
+        let react_elem =
+            make_class_spec
+            begin
+                fun ~this ->
+                    DOM.make
+                        ~tag:`p
+                        (Hashtbl.fold (fun name inst res -> (render_processor inst) :: res) t [])
+            end
+            |> create_class
+            |> create_element_from_class in
+        render ~react_elem (get_elem ~id: container_id)
 end
 
 let create_processor_client_inst
         (type a)
-        (module P: M_p.Processor with type config = a)
+        (module P: M_p_c.Processor with type config = a)
         config =
     (module struct
         module Processor = P
         let client = ref (Processor.Client.create config)
+        let update_bus = Bus.create !client
         let update t =
             client := t;
-            Processor.Client.print_state t;
+            Bus.emit update_bus t;
+            Processor.Client.print_state t
+        let react_class = Processor.get_react_class update_bus
     end: Processor_client_inst)
 
 let client = Client.create [
-    create_processor_client_inst (module Total_count_processor) { interval_s = 7200 }
+    create_processor_client_inst (module Total_count_processor_client) { interval_s = 7200 }
 ]

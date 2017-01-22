@@ -1,5 +1,6 @@
 S ./
 S shared0
+S processors
 PKG core
 PKG cohttp
 PKG cohttp.async
@@ -11,6 +12,8 @@ PKG websocket
 PKG js_of_ocaml
 PKG js_of_ocaml.ppx
 PKG lwt
+PKG Reactjs
 B _build
 B _build/shared0
+B _build/processors
 B +threads

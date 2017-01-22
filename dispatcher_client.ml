@@ -1,7 +1,13 @@
 module M_p = Message_processor
 
+module type Processor_client_inst = sig
+    module Processor: M_p.Processor
+    val update: Processor.Client.t -> unit
+    val client: Processor.Client.t ref
+end;;
+
 module Client = struct
-    type t = (string, (module M_p.Processor_client_inst)) Hashtbl.t
+    type t = (string, (module Processor_client_inst)) Hashtbl.t
 
     let client_payload_to_string payload =
         Yojson.Safe.to_string
@@ -13,8 +19,8 @@ module Client = struct
     let create l =
         let table: t = Hashtbl.create 10 in
         List.iter begin
-            fun (module M: M_p.Processor_client_inst) ->
-                Hashtbl.add table M.Processor.name (module M: M_p.Processor_client_inst)
+            fun (module M: Processor_client_inst) ->
+                Hashtbl.add table M.Processor.name (module M: Processor_client_inst)
         end l;
         table
 
@@ -28,7 +34,7 @@ module Client = struct
         match server_payload with
             | M_p.Server_payload.Full (name, version, data) -> begin
                 try
-                    let (module M: M_p.Processor_client_inst) = Hashtbl.find t name in
+                    let (module M: Processor_client_inst) = Hashtbl.find t name in
                     match M.Processor.set_client_state !M.client data version with
                         | Ok client -> Ok (M.update client)
                         | Error _ as err -> err
@@ -37,7 +43,7 @@ module Client = struct
             end
             | M_p.Server_payload.Update (name, version, data) -> begin
                 try
-                    let (module M: M_p.Processor_client_inst) = Hashtbl.find t name in
+                    let (module M: Processor_client_inst) = Hashtbl.find t name in
                     match M.Processor.update_client_state !M.client data version with
                         | Ok client -> Ok (M.update client)
                         | Error "Version mismatch" ->
@@ -50,6 +56,18 @@ module Client = struct
             | M_p.Server_payload.Empty -> Ok ()
 end
 
+let create_processor_client_inst
+        (type a)
+        (module P: M_p.Processor with type config = a)
+        config =
+    (module struct
+        module Processor = P
+        let client = ref (Processor.Client.create config)
+        let update t =
+            client := t;
+            Processor.Client.print_state t;
+    end: Processor_client_inst)
+
 let client = Client.create [
-    M_p.create_processor_client_inst (module M_p.Total_count_processor) { interval_s = 5 }
+    create_processor_client_inst (module Total_count_processor) { interval_s = 7200 }
 ]

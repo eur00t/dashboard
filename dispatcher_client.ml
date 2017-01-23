@@ -60,7 +60,31 @@ module Client = struct
 
     let render_processor (module M: Processor_client_inst) =
         let open Reactjs in
-        Elem (create_element_from_class M.react_class)
+        let title = M.Processor.Client.get_title !M.client in
+        Elem (DOM.make
+            ~tag: `div
+            ~class_name: "processor"
+            ((match title with
+                | Some str -> [
+                    Elem (DOM.make
+                        ~tag: `div
+                        ~class_name: "title"
+                        [
+                            Text str
+                        ]
+                    )
+                ]
+                | None -> []) @
+            [
+                Elem (DOM.make
+                    ~tag: `div
+                    ~class_name: "content"
+                    [
+                        Elem (create_element_from_class M.react_class)
+                    ]
+                )
+            ])
+        )
 
     let render t container_id =
         let open Reactjs in
@@ -69,8 +93,15 @@ module Client = struct
             begin
                 fun ~this ->
                     DOM.make
-                        ~tag:`p
-                        (Hashtbl.fold (fun name inst res -> (render_processor inst) :: res) t [])
+                        ~tag: `div
+                        ~class_name: "processors"
+                        [
+                            Elem (DOM.make
+                                ~tag: `div
+                                ~class_name: "processors-inner"
+                                (Hashtbl.fold (fun name inst res -> (render_processor inst) :: res) t [])
+                            )
+                        ]
             end
             |> create_class
             |> create_element_from_class in
@@ -80,20 +111,29 @@ end
 let create_processor_client_inst
         (type a)
         ?name
+        ?title
         (module P: M_p_c.Processor with type config = a)
         config =
     (module struct
         module Processor = P
-        let client = ref (Processor.Client.create ?name config)
+        let client = ref (Processor.Client.create ?name ?title config)
         let update_bus = Bus.create !client
         let update t =
             client := t;
             Bus.emit update_bus t;
             Processor.Client.print_state t
-        let react_class = Processor.get_react_class update_bus
+        let react_class = Processor.get_react_class !client update_bus
     end: Processor_client_inst)
 
 let client = Client.create [
-    create_processor_client_inst (module Total_count_processor_client) { interval_s = 7200 };
-    create_processor_client_inst (module Total_count_processor_client) { interval_s = 60 } ~name: "total_minute"
+    create_processor_client_inst (module Total_count_processor_client)
+        { interval_s = 7200 };
+    create_processor_client_inst (module Total_count_processor_client)
+        { interval_s = 60 }
+        ~name: "total_minute"
+        ~title: "Number of messages since 1 minute from last one";
+    create_processor_client_inst (module Total_count_processor_client)
+        { interval_s = 60 }
+        ~name: "total_minute1"
+        ~title: "Number of messages since 1 minute from last one"
 ]

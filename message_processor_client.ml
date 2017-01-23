@@ -3,7 +3,7 @@ module M_p = Message_processor
 module type Processor_core = sig
     include M_p.Processor_core
 
-    val render: client_state -> Reactjs.Low_level_bindings.react_element Js.t
+    val render: ?title: string -> client_state -> Reactjs.Low_level_bindings.react_element Js.t
 end
 
 module type Processor = sig
@@ -12,13 +12,14 @@ module type Processor = sig
     module Client: sig
         type t
         val print_state: t -> unit
-        val create: ?name: string -> config -> t
+        val create: ?name: string -> ?title: string -> config -> t
         val get_name: t -> string
+        val get_title: t -> string option
     end
 
     val set_client_state: Client.t -> Yojson.Safe.json -> int -> (Client.t, string) result
     val update_client_state: Client.t -> Yojson.Safe.json -> int -> (Client.t, string) result
-    val get_react_class: Client.t Bus.t -> Reactjs.Low_level_bindings.react_class Js.t
+    val get_react_class: Client.t -> Client.t Bus.t -> Reactjs.Low_level_bindings.react_class Js.t
 end
 
 module Make_processor (Core: Processor_core) = struct
@@ -28,6 +29,7 @@ module Make_processor (Core: Processor_core) = struct
         type t = {
             c: config;
             name: string;
+            title: string option;
             state: Core.client_state;
             version: int
         }
@@ -36,16 +38,18 @@ module Make_processor (Core: Processor_core) = struct
             print_string (Yojson.Safe.to_string (Core.client_state_to_yojson t.state));
             flush_all ()
 
-        let create ?name config = {
+        let create ?name ?title config = {
             c = config;
             name = (match name with
                 | Some str -> str
                 | None -> Core.default_name);
+            title = title;
             state = Core.client_state_empty config;
             version = 0
         }
 
         let get_name { name } = name
+        let get_title { title } = title
     end
 
     let set_client_state t json version =
@@ -66,7 +70,7 @@ module Make_processor (Core: Processor_core) = struct
             }
             | Error _ as err -> err
 
-    let get_react_class bus =
+    let get_react_class { Client.title } bus =
         let open Reactjs in
         make_class_spec
             ~initial_state: begin
@@ -95,7 +99,7 @@ module Make_processor (Core: Processor_core) = struct
             begin
                 fun ~this ->
                     match Core.client_state_of_yojson (Yojson.Safe.from_string this##.state##.state_str) with
-                        | Ok state -> Core.render state
+                        | Ok state -> Core.render state ?title
                         | Error msg -> DOM.make ~tag:`p [Text ("Error happened: " ^ msg)]
 
             end

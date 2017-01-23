@@ -19,6 +19,14 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
         ts: int
     } [@@deriving of_yojson { strict = false }]
 
+    type user_info = {
+        first_name: string;
+        last_name: string;
+        photo_max: string
+    } [@@deriving of_yojson { strict = false }]
+
+    type users_info = user_info list [@@deriving of_yojson { strict = false }]
+
     module Config = Config;;
 
     let bus =
@@ -47,7 +55,50 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
             | 4 -> Message json
             | _ -> Other json;;
 
+    let user_info_cache = String.Table.create ()
+
+    let get_user_info id =
+        let open Deferred.Or_error.Monad_infix in
+        match String.Table.find user_info_cache id with
+            | Some response ->
+                Deferred.Or_error.ok_unit
+                >>= fun _ ->
+                return (Ok response)
+            | None ->
+                Api.do_request "users.get" [("user_ids", id); ("fields", "photo_max")]
+                >>= fun response ->
+                String.Table.set user_info_cache ~key: id ~data: response;
+                return (Ok response)
+
+    let fill_user_info msg =
+        let open Deferred.Or_error.Monad_infix in
+        Deferred.Or_error.ok_unit
+        >>= fun _ ->
+            (match Chat_message.get_from msg with
+                | Some str -> return (Ok str)
+                | None -> Deferred.Or_error.error_string "From field is missing");
+        >>= fun from ->
+        get_user_info from;
+        >>= fun response ->
+        return (Util.result_to_or_error (users_info_of_yojson response));
+        >>= function
+            | [user] -> return (Ok user)
+            | [] | _ -> Deferred.Or_error.error_string "Wrong API response";
+        >>= fun user ->
+        return (Ok (Chat_message.fill_user_info
+            ~first_name: user.first_name
+            ~last_name: user.last_name
+            ~photo: user.photo_max
+            msg))
+
     let process_chat_message msg =
+        fill_user_info msg
+        >>= begin
+            function
+                | Ok msg -> return msg
+                | Error _ -> return msg
+        end
+        >>= fun msg ->
         Core.Std.Bus.write bus msg;
         return ();;
 

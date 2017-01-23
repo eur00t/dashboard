@@ -23,7 +23,7 @@ module Core = struct
             done;
             !delta_ref
         end in
-        q, delta
+        q, Some delta
 end
 
 include Message_processor.Make_processor(Core)

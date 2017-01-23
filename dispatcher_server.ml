@@ -27,9 +27,11 @@ module Server = struct
     let process_message ws_server t msg =
         Hashtbl.filter_map_inplace begin
             fun name (module M: Processor_server_inst) ->
-                let (server, payload) = M.Processor.process_message !M.server msg in
+                let (server, maybe_payload) = M.Processor.process_message !M.server msg in
                 M.update server;
-                ignore (send_server_payload ws_server payload);
+                (match maybe_payload with
+                    | None -> ()
+                    | Some payload -> ignore (send_server_payload ws_server payload));
                 Some (module M)
         end t
 

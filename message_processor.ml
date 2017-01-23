@@ -24,7 +24,7 @@ module type Processor_core = sig
     val server_state_empty: config -> server_state
     val client_state_from_server_state: server_state -> client_state
     val update_client_state: client_state -> update -> client_state
-    val process_message: server_state -> config -> Chat_message.t -> server_state * update
+    val process_message: server_state -> config -> Chat_message.t -> server_state * update option
 end
 
 module type Processor = sig
@@ -37,7 +37,7 @@ module type Processor = sig
     end
 
     val get_full_server_payload: Server.t -> Server_payload.t
-    val process_message: Server.t -> Chat_message.t -> Server.t * Server_payload.t
+    val process_message: Server.t -> Chat_message.t -> Server.t * Server_payload.t option
 end
 
 module Make_processor (Core: Processor_core) = struct
@@ -79,9 +79,14 @@ module Make_processor (Core: Processor_core) = struct
             t with
             Server.state; version
         },
-        Update (
-            t.Server.name,
-            version,
-            Core.update_to_yojson update
-        )
+        match update with
+            | None -> None
+            | Some update ->
+                Some (
+                    Update (
+                        t.Server.name,
+                        version,
+                        Core.update_to_yojson update
+                    )
+                )
 end

@@ -20,7 +20,7 @@ module Server = struct
         let table: t = Hashtbl.create 10 in
         List.iter begin
             fun (module M: Processor_server_inst) ->
-                Hashtbl.add table M.Processor.name (module M: Processor_server_inst)
+                Hashtbl.add table (M.Processor.Server.get_name !(M.server))  (module M: Processor_server_inst)
         end l;
         table
 
@@ -47,14 +47,16 @@ end
 
 let create_processor_server_inst
         (type a)
+        ?name
         (module P: M_p.Processor with type config = a)
         config =
     (module struct
         module Processor = P
-        let server = ref (Processor.Server.create config)
+        let server = ref (Processor.Server.create ?name config)
         let update t = server := t
     end: Processor_server_inst)
 
 let server = Server.create [
-    create_processor_server_inst (module Total_count_processor) { interval_s = 7200 }
+    create_processor_server_inst (module Total_count_processor) { interval_s = 7200 };
+    create_processor_server_inst (module Total_count_processor) { interval_s = 60 } ~name: "total_minute"
 ]

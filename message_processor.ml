@@ -14,7 +14,7 @@ module Server_payload = struct
 end;;
 
 module type Processor_core = sig
-    val name: string
+    val default_name: string
     type server_state
     type client_state [@@deriving yojson]
     type config [@@deriving yojson]
@@ -29,17 +29,18 @@ end
 
 module type Processor = sig
     type config
-    val name: string
 
     module Server: sig
         type t
-        val create: config -> t
+        val create: ?name: string -> config -> t
+        val get_name: t -> string
     end
 
     module Client: sig
         type t
         val print_state: t -> unit
-        val create: config -> t
+        val create: ?name: string -> config -> t
+        val get_name: t -> string
     end
 
     val set_client_state: Client.t -> Yojson.Safe.json -> int -> (Client.t, string) result
@@ -50,25 +51,31 @@ end
 
 module Make_processor (Core: Processor_core) = struct
     type config = Core.config
-    let name = Core.name
 
     module Server = struct
         type t = {
             c: config;
+            name: string;
             state: Core.server_state;
             version: int
         }
 
-        let create config = {
+        let create ?name config = {
             c = config;
+            name = (match name with
+                | Some str -> str
+                | None -> Core.default_name);
             state = Core.server_state_empty config;
             version = 0
         }
+
+        let get_name { name } = name
     end
 
     module Client = struct
         type t = {
             c: config;
+            name: string;
             state: Core.client_state;
             version: int
         }
@@ -77,11 +84,16 @@ module Make_processor (Core: Processor_core) = struct
             print_string (Yojson.Safe.to_string (Core.client_state_to_yojson t.state));
             flush_all ()
 
-        let create config = {
+        let create ?name config = {
             c = config;
+            name = (match name with
+                | Some str -> str
+                | None -> Core.default_name);
             state = Core.client_state_empty config;
             version = 0
         }
+
+        let get_name { name } = name
     end
 
     let set_client_state t json version =
@@ -95,7 +107,7 @@ module Make_processor (Core: Processor_core) = struct
     let get_full_server_payload t =
         let open Server_payload in
         Full (
-            Core.name,
+            t.Server.name,
             t.Server.version,
             Core.client_state_to_yojson (Core.client_state_from_server_state t.Server.state)
         )
@@ -119,7 +131,7 @@ module Make_processor (Core: Processor_core) = struct
             Server.state; version
         },
         Update (
-            Core.name,
+            t.Server.name,
             version,
             Core.update_to_yojson update
         )

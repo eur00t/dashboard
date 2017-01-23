@@ -23,7 +23,7 @@ module Client = struct
         let table: t = Hashtbl.create 10 in
         List.iter begin
             fun (module M: Processor_client_inst) ->
-                Hashtbl.add table M.Processor.name (module M: Processor_client_inst)
+                Hashtbl.add table (M.Processor.Client.get_name !(M.client)) (module M: Processor_client_inst)
         end l;
         table
 
@@ -79,11 +79,12 @@ end
 
 let create_processor_client_inst
         (type a)
+        ?name
         (module P: M_p_c.Processor with type config = a)
         config =
     (module struct
         module Processor = P
-        let client = ref (Processor.Client.create config)
+        let client = ref (Processor.Client.create ?name config)
         let update_bus = Bus.create !client
         let update t =
             client := t;
@@ -93,5 +94,6 @@ let create_processor_client_inst
     end: Processor_client_inst)
 
 let client = Client.create [
-    create_processor_client_inst (module Total_count_processor_client) { interval_s = 7200 }
+    create_processor_client_inst (module Total_count_processor_client) { interval_s = 7200 };
+    create_processor_client_inst (module Total_count_processor_client) { interval_s = 60 } ~name: "total_minute"
 ]

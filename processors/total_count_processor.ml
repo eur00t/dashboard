@@ -1,5 +1,5 @@
 module Core = struct
-    let name = "total"
+    let default_name = "total"
     type server_state = int Queue.t
     type client_state = int [@@deriving yojson]
     type config = { interval_s: int } [@@deriving yojson]

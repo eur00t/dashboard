@@ -77,7 +77,7 @@ module Make_processor (Core: Processor_core) = struct
                 fun ~this ->
                     let client = Bus.get_last bus in
                     object%js
-                        val state_str = Yojson.Safe.to_string (Core.client_state_to_yojson client.Client.state)
+                        val state_str = Json.output client.Client.state
                     end
             end
             ~component_did_mount: begin
@@ -86,7 +86,7 @@ module Make_processor (Core: Processor_core) = struct
                         fun client ->
                             this##setState (
                                 object%js
-                                    val state_str = Yojson.Safe.to_string (Core.client_state_to_yojson client.Client.state)
+                                    val state_str = Json.output client.Client.state
                                 end
                             )
                     )
@@ -98,9 +98,7 @@ module Make_processor (Core: Processor_core) = struct
 
             begin
                 fun ~this ->
-                    match Core.client_state_of_yojson (Yojson.Safe.from_string this##.state##.state_str) with
-                        | Ok state -> Core.render state ?title
-                        | Error msg -> DOM.make ~tag:`p [Text ("Error happened: " ^ msg)]
+                    Core.render (Json.unsafe_input this##.state##.state_str) ?title
 
             end
         |> create_class

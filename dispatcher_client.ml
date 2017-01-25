@@ -58,12 +58,16 @@ module Client = struct
             end
             | M_p.Server_payload.Empty -> Ok ()
 
-    let render_processor (module M: Processor_client_inst) =
+    let render_processor name (module M: Processor_client_inst) =
         let open Reactjs in
+        let open Reactjs.Infix in
         let title = M.Processor.Client.get_title !M.client in
         Elem (DOM.make
             ~tag: `div
             ~class_name: "processor"
+            ~elem_spec: (object%js
+                val key = !* name
+            end)
             ((match title with
                 | Some str -> [
                     Elem (DOM.make
@@ -99,7 +103,7 @@ module Client = struct
                             Elem (DOM.make
                                 ~tag: `div
                                 ~class_name: "processors-inner"
-                                (Hashtbl.fold (fun name inst res -> (render_processor inst) :: res) t [])
+                                (Hashtbl.fold (fun name inst res -> (render_processor name inst) :: res) t [])
                             )
                         ]
             end
@@ -121,19 +125,17 @@ let create_processor_client_inst
         let update t =
             client := t;
             Bus.emit update_bus t;
-            Processor.Client.print_state t
+            (*Processor.Client.print_state t*)
+            ()
         let react_class = Processor.get_react_class !client update_bus
     end: Processor_client_inst)
 
 let client = Client.create [
-    create_processor_client_inst (module Total_count_processor_client)
-        { interval_s = 7200 };
+    (*create_processor_client_inst (module Total_count_processor_client)
+        { interval_s = 7200 };*)
     create_processor_client_inst (module Total_count_processor_client)
         { interval_s = 60 }
         ~name: "total_minute"
         ~title: "Number of messages since 1 minute from last one";
-    create_processor_client_inst (module Total_count_processor_client)
-        { interval_s = 60 }
-        ~name: "total_minute1"
-        ~title: "Number of messages since 1 minute from last one"
+    create_processor_client_inst (module Conversations_processor_client) { interval_s = 10; decay_s = 10 }
 ]

@@ -1,6 +1,6 @@
-open Core.Std;;
-open Async.Std;;
 open Message_processor;;
+
+module Log = Async.Std.Log.Global
 
 let xxlv_chat_id = 8;;
 let test_chat_id = 18;;
@@ -24,12 +24,36 @@ let subscribe_dispatcher (module ChatModule: Api_chat.Api_chat) ws_server =
             Dispatcher_server.server
             msg);;
 
+let dump code =
+    try
+        let dump_filename = Array.get Sys.argv 1 in
+        Log.debug "Received signal (%d). Saving state to file %s" code dump_filename;
+        Dispatcher_server.Server.dump_to_file
+            Dispatcher_server.server
+            dump_filename;
+        exit 0
+    with
+        Invalid_argument _ -> exit 0
+
+let read_dump () =
+    try
+        let dump_filename = Array.get Sys.argv 1 in
+        Dispatcher_server.Server.read_dump_from_file
+            Dispatcher_server.server
+            dump_filename;
+        Log.info "Dump was loaded successfully from file \"%s\"" dump_filename;
+    with
+        | Invalid_argument _ -> ()
+        | Sys_error msg -> Log.error "Error while reading dump: %s" msg;;
+
 let () =
-    Log.Global.set_level `Debug;
+    Log.set_level `Debug;
+    read_dump ();
     let ws_server = App_websocket.start
-        ~url: "ws://localhost:8081/api"
+        ~url: "ws://192.168.1.157:8081/api"
         ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server)) in
 
+    Sys.set_signal Sys.sigint (Sys.Signal_handle dump);
     (*let rec poll () =
         after (Time.Span.of_sec 5.0)
         >>= fun () ->
@@ -39,8 +63,9 @@ let () =
     ignore (poll ());*)
     ignore (subscribe_simple_printer (module XxlvChat));
     ignore (subscribe_simple_printer (module TestChat));
+    ignore (subscribe_dispatcher (module XxlvChat) ws_server);
     ignore (subscribe_dispatcher (module TestChat) ws_server);
 
-    (*XxlvChat.start ();*)
+    XxlvChat.start ();
     TestChat.start ();
-    never_returns (Scheduler.go ())
+    Core.Std.never_returns (Async.Std.Scheduler.go ())

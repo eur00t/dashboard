@@ -1,4 +1,5 @@
 module M_p = Message_processor
+module U = Util_shared
 
 module type Processor_server_inst = sig
     module Processor: M_p.Processor
@@ -8,6 +9,24 @@ end;;
 
 module Server = struct
     type t = (string, (module Processor_server_inst)) Hashtbl.t
+
+    let dump_to_file server filename =
+        let marsh_dict = server
+            |> U.table_to_pairs
+            |> List.map (fun (name, (module M: Processor_server_inst)) ->
+                (name, Marshal.to_string (!M.server) [])) in
+        let marsh_str = Marshal.to_string marsh_dict [] in
+        Core.Std.Out_channel.write_all filename ~data: marsh_str
+
+    let read_dump_from_file server filename =
+        let marsh_str = Core.Std.In_channel.read_all filename in
+        let marsh_dict = Marshal.from_string marsh_str 0 in
+        List.iter begin
+            fun (name, server_marsh_str) ->
+                if Hashtbl.mem server name then
+                let (module M: Processor_server_inst) = Hashtbl.find server name in
+                M.update (Marshal.from_string server_marsh_str 0)
+        end marsh_dict
 
     let server_payload_to_string payload =
         Yojson.Safe.to_string
@@ -59,6 +78,7 @@ let create_processor_server_inst
     end: Processor_server_inst)
 
 let server = Server.create [
-    create_processor_server_inst (module Total_count_processor) { interval_s = 7200 };
-    create_processor_server_inst (module Total_count_processor) { interval_s = 60 } ~name: "total_minute"
+    (*create_processor_server_inst (module Total_count_processor) { interval_s = 7200 };*)
+    create_processor_server_inst (module Total_count_processor) { interval_s = 60 } ~name: "total_minute";
+    create_processor_server_inst (module Conversations_processor) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
 ]

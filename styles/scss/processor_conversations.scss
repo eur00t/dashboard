@@ -33,6 +33,15 @@ $conv-time-width: 105px;
 
                 position: relative;
 
+                &.gold, &.silver {
+                    > .count { visibility: visible; }
+                }
+
+                > .count,
+                > .count.single {
+                    visibility: hidden;
+                }
+
                 &.gold {
                     > .photo {
                         border-color: #d4af37;

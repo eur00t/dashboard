@@ -34,7 +34,7 @@ module Core = struct
                         ~tag: `img
                         [])
                 ];
-                el `div "count" [
+                el `div ("count" ^ (if num = 1 then " single" else ""))  [
                     Text (string_of_int num)
                 ]
             ]

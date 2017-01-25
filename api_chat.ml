@@ -22,7 +22,7 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
     type user_info = {
         first_name: string;
         last_name: string;
-        photo_max: string
+        photo_50: string
     } [@@deriving of_yojson { strict = false }]
 
     type users_info = user_info list [@@deriving of_yojson { strict = false }]
@@ -65,7 +65,7 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
                 >>= fun _ ->
                 return (Ok response)
             | None ->
-                Api.do_request "users.get" [("user_ids", id); ("fields", "photo_max")]
+                Api.do_request "users.get" [("user_ids", id); ("fields", "photo_50")]
                 >>= fun response ->
                 String.Table.set user_info_cache ~key: id ~data: response;
                 return (Ok response)
@@ -88,7 +88,7 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
         return (Ok (Chat_message.fill_user_info
             ~first_name: user.first_name
             ~last_name: user.last_name
-            ~photo: user.photo_max
+            ~photo: user.photo_50
             msg))
 
     let process_chat_message msg =

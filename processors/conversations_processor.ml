@@ -30,6 +30,7 @@ module Core = struct
         photo: string;
     } [@@deriving yojson]
     type server_state = {
+        next_conv_id: int;
         convs: conv Queue.t;
         conv_current: conv option;
         users_info: (string, user_info) Hashtbl.t;
@@ -53,10 +54,7 @@ module Core = struct
 
     let next_id = ref 0
 
-    let get_next_id () =
-        let id = !next_id in
-        next_id := id + 1;
-        id
+    let get_next_id server_state = server_state.next_conv_id
 
     let client_state_empty _ = {
         convs = [];
@@ -65,6 +63,7 @@ module Core = struct
     }
 
     let server_state_empty _ = {
+        next_conv_id = 0;
         convs = Queue.create ();
         conv_current = None;
         users_info = Hashtbl.create 10;
@@ -143,13 +142,14 @@ module Core = struct
         let people = Hashtbl.create 10 in
         Hashtbl.add people from 1;
         let conv = {
-            id = get_next_id ();
+            id = get_next_id server_state;
             start = time;
             end_ = time;
             people
         } in
         {
             server_state with
+            next_conv_id = server_state.next_conv_id + 1;
             conv_current = Some conv
         }, [New_current conv]
 

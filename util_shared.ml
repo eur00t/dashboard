@@ -33,7 +33,7 @@ let queue_to_list q =
         else let elem = Queue.pop q in
         elem :: (to_list q)
     in
-    to_list (Queue.copy q)
+    List.rev (to_list (Queue.copy q))
 
 let deoption_tuple4 t =
     match t with

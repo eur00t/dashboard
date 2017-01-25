@@ -1,74 +1,6 @@
-module Hashtbl_ext = struct
-    include Hashtbl
+module U = Util_shared
 
-    type ('a, 'b) pairs_list = ('a * 'b) list [@@deriving yojson]
-
-    let to_yojson a_to_yojson b_to_yojson t = pairs_list_to_yojson
-        a_to_yojson b_to_yojson
-        (Hashtbl.fold begin
-            fun key val_ l -> (key, val_) :: l
-        end t [])
-
-    let of_yojson a_of_yojson b_of_yojson json =
-        match pairs_list_of_yojson a_of_yojson b_of_yojson json with
-            | Ok pairs ->
-                Ok begin
-                    List.fold_left begin
-                        fun table (key, value) ->
-                            Hashtbl.add table key value;
-                            table
-                    end (Hashtbl.create 10) pairs
-                end
-            | Error _ as err -> err
-
-    let keys t = fold (fun key _ res -> key:: res) t []
-end
-
-module Hashtbl = Hashtbl_ext
-
-type conv = {
-    id: int;
-    start: int;
-    end_: int;
-    people: (string, int) Hashtbl.t; (* id, msgs_count *)
-} [@@deriving yojson]
-
-type user_info = {
-    first_name: string;
-    last_name: string;
-    photo: string;
-} [@@deriving yojson]
-
-let queue_to_list q =
-    let rec to_list q =
-        if Queue.is_empty q then []
-        else let elem = Queue.pop q in
-        elem :: (to_list q)
-    in
-    to_list (Queue.copy q)
-
-let deoption_tuple4 t =
-    match t with
-        | (None, _, _, _) | (_, None, _, _)
-        | (_, _, None, _) | (_,_, _, None) -> None
-        | (Some a, Some b, Some c, Some d) -> Some (a, b, c, d)
-
-let table_inc t key =
-    let exists = Hashtbl.mem t key in
-    Hashtbl.replace t key (if exists then (Hashtbl.find t key) + 1 else 1);
-    exists
-
-let table_dec t key =
-    if Hashtbl.mem t key then
-        let count = Hashtbl.find t key in
-        if count = 1 then begin
-            Hashtbl.remove t key;
-            false
-        end else begin
-            Hashtbl.replace t key (count - 1);
-            true
-        end
-    else false
+module Hashtbl = U.Hashtbl_ext
 
 let iterate_updates funcs server_state =
     let rec loop funcs server_state updates_accum =
@@ -84,16 +16,19 @@ let result_updates_to_option (server_state, updates) =
             | [] -> server_state, None
             | _ -> server_state, Some updates
 
-let filter_some l =
-    List.fold_left begin
-        fun acc opt ->
-            match opt with
-                | Some a -> a :: acc
-                | None -> acc
-    end [] l
-
 module Core = struct
     let default_name = "conversations"
+    type conv = {
+        id: int;
+        start: int;
+        end_: int;
+        people: (string, int) Hashtbl.t; (* id, msgs_count *)
+    } [@@deriving yojson]
+    type user_info = {
+        first_name: string;
+        last_name: string;
+        photo: string;
+    } [@@deriving yojson]
     type server_state = {
         convs: conv Queue.t;
         conv_current: conv option;
@@ -137,7 +72,7 @@ module Core = struct
     }
 
     let client_state_from_server_state (server_state: server_state) = {
-        convs = queue_to_list server_state.convs;
+        convs = U.queue_to_list server_state.convs;
         conv_current = server_state.conv_current;
         users_info = server_state.users_info
     }
@@ -181,7 +116,7 @@ module Core = struct
         List.fold_left update_client_state_single client_state updates
 
     let add_user_ref from user_info server_state =
-        if not (table_inc server_state.user_refs from)
+        if not (U.table_inc server_state.user_refs from)
         then begin
             Hashtbl.add server_state.users_info from user_info;
             server_state, [Add_user_info (from, user_info)]
@@ -190,7 +125,7 @@ module Core = struct
 
     let update_current_iter conv time from user_info server_state =
         let server_state, updates =
-            if not (table_inc conv.people from) then
+            if not (U.table_inc conv.people from) then
                 add_user_ref from user_info server_state
             else
                 server_state, [] in
@@ -228,13 +163,13 @@ module Core = struct
     let clean_conv conv server_state =
         let updates_opt = List.map begin
             fun key ->
-                if not (table_dec server_state.user_refs key) then begin
+                if not (U.table_dec server_state.user_refs key) then begin
                     Hashtbl.remove server_state.users_info key;
                     Some (Remove_user_info key)
                 end else
                     None
         end (Hashtbl.keys conv.people) in
-        let updates = filter_some updates_opt in
+        let updates = U.filter_some updates_opt in
         server_state, (Remove_conv conv.id) :: updates
 
     let clean_convs decay_s time (server_state: server_state) =
@@ -279,7 +214,7 @@ module Core = struct
     let process_message (server_state: server_state) { interval_s; decay_s } msg =
         let module C = Chat_message in
         let time = C.get_time msg in
-        match deoption_tuple4 (
+        match U.deoption_tuple4 (
             C.get_from msg,
             C.get_first_name msg,
             C.get_last_name msg,

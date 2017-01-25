@@ -1,0 +1,70 @@
+$conv-users-overlap: 6px;
+$conv-time-width: 105px;
+
+.processor-conversations {
+    .conv {
+        margin: 0 0 10px 0;
+
+        position: relative;
+
+        > .time {
+            position: absolute;
+
+            top: 8px;
+            left: 0;
+
+            width: $conv-time-width;
+
+            text-align: right;
+
+            padding: 0 9px 0 0;
+
+            font-size: 14px;
+        }
+
+        > ul.users {
+            margin: 0 0 0 $conv-time-width;
+            padding: 0 0 0 $conv-users-overlap;
+
+            > .user {
+                display: inline-block;
+
+                margin: 0 0 0 (-$conv-users-overlap);
+
+                position: relative;
+
+                &.gold {
+                    > .photo {
+                        border-color: #d4af37;
+                    }
+                }
+
+                &.silver {
+                    > .photo {
+                        border-color: #c0c0c0;
+                    }
+                }
+
+                > .photo {
+                    width: 36px;
+                    height: 36px;
+
+                    border-radius: 50%;
+                    border: 2px solid white;
+
+                    overflow: hidden;
+
+                    > img {
+                        width: 100%;
+                        height: 100%;
+                    }
+                }
+
+                > .count {
+                    text-align: center;
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+}

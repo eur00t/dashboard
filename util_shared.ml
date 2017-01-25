@@ -1,3 +1,15 @@
+let table_to_pairs t =
+    Hashtbl.fold begin
+        fun key val_ l -> (key, val_) :: l
+    end t []
+
+let table_of_pairs pairs num =
+    List.fold_left begin
+        fun table (key, value) ->
+            Hashtbl.add table key value;
+            table
+    end (Hashtbl.create num) pairs
+
 module Hashtbl_ext = struct
     include Hashtbl
 
@@ -5,20 +17,11 @@ module Hashtbl_ext = struct
 
     let to_yojson a_to_yojson b_to_yojson t = pairs_list_to_yojson
         a_to_yojson b_to_yojson
-        (Hashtbl.fold begin
-            fun key val_ l -> (key, val_) :: l
-        end t [])
+        (table_to_pairs t)
 
     let of_yojson a_of_yojson b_of_yojson json =
         match pairs_list_of_yojson a_of_yojson b_of_yojson json with
-            | Ok pairs ->
-                Ok begin
-                    List.fold_left begin
-                        fun table (key, value) ->
-                            Hashtbl.add table key value;
-                            table
-                    end (Hashtbl.create 10) pairs
-                end
+            | Ok pairs -> Ok (table_of_pairs pairs 10)
             | Error _ as err -> err
 
     let keys t = fold (fun key _ res -> key:: res) t []
@@ -62,3 +65,7 @@ let filter_some l =
                 | Some a -> a :: acc
                 | None -> acc
     end [] l
+
+let get_time_str t =
+    let print_two i = Printf.sprintf "%02u" i in
+    (print_two t.Unix.tm_hour) ^ ":" ^ (print_two t.Unix.tm_min)

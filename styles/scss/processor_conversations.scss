@@ -33,13 +33,15 @@ $conv-time-width: 105px;
 
                 position: relative;
 
+                vertical-align: top;
+
                 &.gold, &.silver {
-                    > .count { visibility: visible; }
+                    > .count { display: block; }
                 }
 
                 // > .count,
                 > .count.single {
-                    visibility: hidden;
+                    display: none;
                 }
 
                 &.gold {

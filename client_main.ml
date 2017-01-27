@@ -33,7 +33,7 @@ let attach_handlers ws retry_s connect =
 
     ws##.onmessage := Dom.handler begin
         fun e ->
-            Firebug.console##log e##.data;
+            (*Firebug.console##log e##.data;*)
             let open Api_types in
             let data = Js.to_string e##.data in
             Api_types.client_handler data ~handler: (Dispatcher_client.Client.process_server_payload Dispatcher_client.client ws);

@@ -1,4 +1,4 @@
-$proc_width: 540px;
+$proc_width: 1024px;
 $proc_spacing: 10px;
 $proc_per_row: 3;
 
@@ -30,6 +30,10 @@ $proc_per_row: 3;
         margin-top: $proc_spacing;
 
         padding: 5px 10px;
+
+        pre.json {
+            height: 500px;
+        }
     }
 }
 

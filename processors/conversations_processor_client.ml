@@ -90,12 +90,6 @@ module Core = struct
             ]
 
     let render ?title state =
-        let str = Yojson.Safe.to_string (client_state_to_yojson state) in
-        let obj = Js.Unsafe.global##.JSON##parse (Js.string str) in
-        let pretty = Js.Unsafe.global##.JSON##stringify obj Js.null 4 in
-
-        Firebug.console##log (Js.string (string_of_int (List.length state.convs)));
-
         let convs = match state.conv_current with
             | Some conv -> conv :: state.convs
             | None -> state.convs in

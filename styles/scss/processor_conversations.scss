@@ -1,16 +1,55 @@
 $conv-users-overlap: 6px;
-$conv-time-width: 105px;
+$conv-time-width: 50px;
+$conv-time-dot-size: 5px;
+$conv-line-color: #aaa;
 
 .processor-conversations {
     .conv {
-        margin: 0 0 10px 0;
-
         position: relative;
+
+        &.point {
+            > .time {
+                &.end {
+                    top: 8px;
+                }
+
+                &.start {
+                    display: none;
+                }
+            }
+
+            > .line {
+                display: none;
+            }
+        }
+
+        &.period {
+            > .time {
+                &.end {
+                    top: 0;
+                }
+
+                &.start {
+                    bottom: 18px;
+                }
+            }
+        }
+
+        > .line {
+            position: absolute;
+
+            width: 3px;
+            left: ($conv-time-width - 1);
+
+            top: 10px;
+            bottom: 28px;
+
+            background: $conv-line-color;
+        }
 
         > .time {
             position: absolute;
 
-            top: 8px;
             left: 0;
 
             width: $conv-time-width;
@@ -20,11 +59,31 @@ $conv-time-width: 105px;
             padding: 0 9px 0 0;
 
             font-size: 14px;
+            font-family: monospace;
+            color: $conv-line-color;
+
+            > .dot {
+                position: absolute;
+
+                right: -(ceil($conv-time-dot-size / 2));
+                top: 50%;
+
+                margin: -(floor($conv-time-dot-size / 2)) 0 0 0;
+
+                width: $conv-time-dot-size;
+                height: $conv-time-dot-size;
+
+                border-radius: $conv-time-dot-size / 2;
+
+                background: $conv-line-color;
+            }
         }
 
         > ul.users {
             margin: 0 0 0 $conv-time-width;
-            padding: 0 0 0 $conv-users-overlap;
+            padding: 0 0 10px ($conv-users-overlap + 7px);
+
+            border-left: 1px solid $conv-line-color;
 
             > .user {
                 display: inline-block;

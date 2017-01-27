@@ -47,27 +47,39 @@ module Core = struct
         if start_str = end_str then start_str
         else start_str ^ "—" ^ end_str
 
+    let get_time class_name time_value =
+        el `div ("time " ^ class_name) [
+            el `div "dot" [];
+            el `span "" [
+                Text (U.get_time_str (Unix.localtime (float_of_int time_value)))
+            ];
+        ]
+
     let render_conv conv users_info =
         let users = conv.people
             |> U.table_to_pairs
             |> List.sort (fun (_, a) (_, b) -> b - a) in
         let l = List.length users in
 
-        node_key `div "conv" (string_of_int conv.id) [
-            el `div "time" [
-                Text (get_period_str conv.start conv.end_)
-            ];
-            el `ul "users"
-                (users
-                |> List.mapi (fun i (id, num) -> Elem (render_user
-                    (match i with
-                        | 0 -> Gold
-                        | 1 -> Silver
-                        | _ -> Normal)
-                    (l - i - 1)
-                    id num
-                    (Hashtbl.find users_info id))))
-        ]
+        node_key
+            `div
+            ("conv" ^ (if conv.start = conv.end_ then " point" else " period"))
+            (string_of_int conv.id)
+            [
+                el `div "line" [];
+                get_time "end" conv.end_;
+                get_time "start" conv.start;
+                el `ul "users"
+                    (users
+                    |> List.mapi (fun i (id, num) -> Elem (render_user
+                        (match i with
+                            | 0 -> Gold
+                            | 1 -> Silver
+                            | _ -> Normal)
+                        (l - i - 1)
+                        id num
+                        (Hashtbl.find users_info id))))
+            ]
 
     let render ?title state =
         let str = Yojson.Safe.to_string (client_state_to_yojson state) in

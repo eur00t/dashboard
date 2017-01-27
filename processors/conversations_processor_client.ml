@@ -39,14 +39,6 @@ module Core = struct
                 ]
             ]
 
-    let get_period_str start end_ =
-        let start_time = Unix.localtime (float_of_int start) in
-        let end_time = Unix.localtime (float_of_int end_) in
-        let start_str = U.get_time_str start_time in
-        let end_str = U.get_time_str end_time in
-        if start_str = end_str then start_str
-        else start_str ^ "—" ^ end_str
-
     let get_time class_name time_value =
         el `div ("time " ^ class_name) [
             el `div "dot" [];
@@ -55,7 +47,18 @@ module Core = struct
             ];
         ]
 
-    let render_conv conv users_info =
+    let if_new_date prev_conv_opt conv =
+        match prev_conv_opt with
+            | Some prev_conv ->
+                let open Unix in
+                let prev_time = localtime (float_of_int prev_conv.start) in
+                let cur_time = localtime (float_of_int conv.start) in
+                prev_time.tm_mday != cur_time.tm_mday ||
+                prev_time.tm_mon != cur_time.tm_mon ||
+                prev_time.tm_year != cur_time.tm_year
+            | None -> true
+
+    let render_conv prev_conv_opt conv users_info =
         let users = conv.people
             |> U.table_to_pairs
             |> List.sort (fun (_, a) (_, b) -> b - a) in
@@ -63,7 +66,9 @@ module Core = struct
 
         node_key
             `div
-            ("conv" ^ (if conv.start = conv.end_ then " point" else " period"))
+            ("conv"
+                ^ (if conv.start = conv.end_ then " point" else " period")
+                ^ (if (if_new_date prev_conv_opt conv) then " new-date" else ""))
             (string_of_int conv.id)
             [
                 el `div "line" [];
@@ -78,7 +83,10 @@ module Core = struct
                             | _ -> Normal)
                         (l - i - 1)
                         id num
-                        (Hashtbl.find users_info id))))
+                        (Hashtbl.find users_info id))));
+                el `div "date" [
+                    Text ((U.get_date_str (Unix.localtime (float_of_int conv.start))) ^ "↑")
+                ]
             ]
 
     let render ?title state =
@@ -88,18 +96,19 @@ module Core = struct
 
         Firebug.console##log (Js.string (string_of_int (List.length state.convs)));
 
+        let convs = match state.conv_current with
+            | Some conv -> conv :: state.convs
+            | None -> state.convs in
+
         node `div "processor-conversations"
-            (begin
-                match state.conv_current with
-                    | Some conv -> [Elem (render_conv conv state.users_info)]
-                    | None -> []
-            end
-            @
-            begin
-                List.map
-                    (fun conv -> Elem (render_conv conv state.users_info))
-                    state.convs
-            end)
+            (
+                let _, res =
+                (List.fold_left
+                    (fun (prev_conv_opt, res) conv ->
+                        Some conv, (Elem (render_conv prev_conv_opt conv state.users_info)) :: res)
+                    (None, [])
+                    (List.rev convs)) in res
+            )
 end
 
 include Message_processor_client.Make_processor(Core)

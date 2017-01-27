@@ -7,6 +7,16 @@ $conv-line-color: #aaa;
     .conv {
         position: relative;
 
+        &.new-date {
+            > .date {
+                display: block;
+            }
+
+            > ul.users {
+                padding-bottom: 38px;
+            }
+        }
+
         &.point {
             > .time {
                 &.end {
@@ -135,6 +145,20 @@ $conv-line-color: #aaa;
                     font-size: 12px;
                 }
             }
+        }
+
+        > .date {
+            display: none;
+
+            font-size: 14px;
+
+            position: absolute;
+            bottom: 10px;
+            left: $conv-time-width + 5px;
+
+            padding: 0 0 0 5px;
+
+            color: $conv-line-color;
         }
     }
 }

@@ -66,6 +66,12 @@ let filter_some l =
                 | None -> acc
     end [] l
 
-let get_time_str t =
-    let print_two i = Printf.sprintf "%02u" i in
-    (print_two t.Unix.tm_hour) ^ ":" ^ (print_two t.Unix.tm_min)
+let print_two i = Printf.sprintf "%02u" i
+
+let get_time_str t = (print_two t.Unix.tm_hour) ^ ":" ^ (print_two t.Unix.tm_min)
+
+let get_date_str t =
+    (print_two t.Unix.tm_mday) ^ "." ^
+    (print_two (t.Unix.tm_mon + 1)) ^ "." ^
+    (print_two (t.Unix.tm_year + 1900))
+

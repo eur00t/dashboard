@@ -110,7 +110,7 @@ let start ?cert_file ?key_file ~url ~handler () =
     let start_server port host cert_file key_file () =
         let mode = determine_mode cert_file key_file in
         let mode_str = (match mode with `OpenSSL _ -> "OpenSSL" | `TCP -> "TCP") in
-        printf "Listening for %s requests on: %s %d\n%!" mode_str host port;
+        debug "Listening for %s requests on: %s %d\n%!" mode_str host port;
         Unix.Inet_addr.of_string_or_getbyname host
         >>= fun host ->
         let listen_on = Tcp.Where_to_listen.create
@@ -119,7 +119,9 @@ let start ?cert_file ?key_file ~url ~handler () =
             ~listening_on: (fun _ -> port)
         in
         Conduit_async.serve
-            ~on_handler_error: `Ignore
+            ~on_handler_error: (`Call (fun addr except ->
+                debug "Conduit error: %s" (Exn.to_string except);
+                ()))
             mode
             listen_on tcp_callback
         >>= fun _ -> never () in

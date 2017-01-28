@@ -114,12 +114,12 @@ let start ?cert_file ?key_file ~url ~handler () =
         Unix.Inet_addr.of_string_or_getbyname host
         >>= fun host ->
         let listen_on = Tcp.Where_to_listen.create
-            ~socket_type:Socket.Type.tcp
-            ~address:(`Inet (host,port))
-            ~listening_on:(fun _ -> port)
+            ~socket_type: Socket.Type.tcp
+            ~address: (`Inet (host, port))
+            ~listening_on: (fun _ -> port)
         in
         Conduit_async.serve
-            ~on_handler_error: `Raise
+            ~on_handler_error: `Ignore
             mode
             listen_on tcp_callback
         >>= fun _ -> never () in

@@ -3,7 +3,7 @@ module M_p = Message_processor
 module type Processor_core = sig
     include M_p.Processor_core
 
-    val render: ?title: string -> client_state -> Reactjs.Low_level_bindings.react_element Js.t
+    val render: ?title: string -> client_state -> config: config -> Reactjs.Low_level_bindings.react_element Js.t
 end
 
 module type Processor = sig
@@ -70,7 +70,7 @@ module Make_processor (Core: Processor_core) = struct
             }
             | Error _ as err -> err
 
-    let get_react_class { Client.title } bus =
+    let get_react_class { Client.title; Client.c } bus =
         let open Reactjs in
         make_class_spec
             ~initial_state: begin
@@ -98,7 +98,7 @@ module Make_processor (Core: Processor_core) = struct
 
             begin
                 fun ~this ->
-                    Core.render (Json.unsafe_input this##.state##.state_str) ?title
+                    Core.render (Json.unsafe_input this##.state##.state_str) ?title ~config: c
 
             end
         |> create_class

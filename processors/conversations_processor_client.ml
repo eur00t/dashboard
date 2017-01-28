@@ -89,7 +89,7 @@ module Core = struct
                 ]
             ]
 
-    let render ?title state =
+    let render ?title state ~config =
         let convs = match state.conv_current with
             | Some conv -> conv :: state.convs
             | None -> state.convs in

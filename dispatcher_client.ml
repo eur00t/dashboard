@@ -138,6 +138,12 @@ let create_processor_client_inst
 
 let client = Client.create [
     create_processor_client_inst (module Total_count_processor_client)
+        3
+        { interval_s = 60 * 60 }
+        ~name: "total_hour"
+        ~title: "1 hour";
+
+    create_processor_client_inst (module Total_count_processor_client)
         2
         { interval_s = 60 }
         ~name: "total_minute"

@@ -78,7 +78,7 @@ let create_processor_server_inst
     end: Processor_server_inst)
 
 let server = Server.create [
-    (*create_processor_server_inst (module Total_count_processor) { interval_s = 7200 };*)
+    create_processor_server_inst (module Total_count_processor) { interval_s = 60 * 60 } ~name: "total_hour";
     create_processor_server_inst (module Total_count_processor) { interval_s = 60 } ~name: "total_minute";
     create_processor_server_inst (module Conversations_processor) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 };
     create_processor_server_inst (module Frequency_processor) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }

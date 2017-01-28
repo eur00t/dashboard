@@ -134,8 +134,8 @@ let client = Client.create [
     create_processor_client_inst (module Total_count_processor_client)
         { interval_s = 60 }
         ~name: "total_minute"
-        ~title: "Number of messages 1 minute before the last one";
-    create_processor_client_inst (module Frequency_processor_client) { interval_s = 5; decay_s = 60 * 60 * 24 }
-        ~title: "Number of messages in 10min intervals";
+        ~title: "1 minute before the last one";
+    create_processor_client_inst (module Frequency_processor_client) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
+        ~title: "10min intervals";
     create_processor_client_inst (module Conversations_processor_client) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
 ]

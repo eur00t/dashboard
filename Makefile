@@ -11,7 +11,7 @@ build:
 	-pkg ppx_sexp_conv \
 	-pkg websocket \
 	-pkg websocket.async \
-	main.d.byte
+	main.native
 clean:
 	ocamlbuild -clean
 

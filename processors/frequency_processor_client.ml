@@ -34,7 +34,9 @@ let update_serie chart data interval_s =
     let serie_opt = Js.array_get chart##.series 0 in
     Js.Optdef.bind serie_opt (fun serie ->
         serie##addPoint (object%js
-            val x = (new%js Js.date_now)##valueOf
+            val x = (new%js Js.date_now)##valueOf +. ((Js.float_of_number interval_s +. 1.) *. 1000.)
+            val y = 0
+            val id = !* "guide"
         end);
         Js.Optdef.return ())
 

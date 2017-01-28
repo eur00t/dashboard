@@ -86,13 +86,18 @@ let start ?cert_file ?key_file ~url ~handler () =
             ~data: { sender_write; receiver_read };
         server_inst.id := !(server_inst.id) + 1;
 
-        let finished = Websocket_async.server
-            ~log: Lazy.(force log)
-            ~app_to_ws ~ws_to_app ~reader ~writer inet_addr
-        in
-        Deferred.any [connection_loop addr_str sender_write receiver_read; finished]
-        >>| fun () ->
-        Int.Table.remove server_inst.sockets id
+        try_with (fun () ->
+            let finished = Websocket_async.server
+                ~log: Lazy.(force log)
+                ~app_to_ws ~ws_to_app ~reader ~writer inet_addr
+            in
+            Deferred.any [connection_loop addr_str sender_write receiver_read; finished]
+            >>| fun () ->
+            Int.Table.remove server_inst.sockets id
+        )
+        >>| function
+            | Ok () -> ()
+            | Error msg -> debug "Error happened"
     in
 
     let determine_mode cert_file_path key_file_path =

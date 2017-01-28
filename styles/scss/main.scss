@@ -1,35 +1,20 @@
-$proc_width: 1024px;
-$proc_spacing: 10px;
-$proc_per_row: 3;
-
 .processors {
-    text-align: center;
-
-    max-width: $proc_width * $proc_per_row + ($proc_per_row + 1) * $proc_spacing;
-
     margin: 0 auto 0 auto;
 
     > .processors-inner {
-        margin: (-$proc_spacing) 0 0 (-$proc_spacing);
-        padding: $proc_spacing / 2;
-
         width: 100%;
     }
 
     .processor {
         width: 100%;
-        max-width: $proc_width;
-        display: inline-block;
-        text-align: left;
-
-        border: 1px solid #ddd;
-        border-radius: 2px;
-        box-shadow: 0 0 1px #ddd;
-
-        margin-left: $proc_spacing;
-        margin-top: $proc_spacing;
 
         padding: 5px 10px;
+
+        margin: 0 0 40px 0;
+
+        > .title {
+            text-align: center;
+        }
 
         pre.json {
             height: 500px;

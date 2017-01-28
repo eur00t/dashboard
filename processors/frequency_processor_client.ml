@@ -15,23 +15,32 @@ let get_current_time_plot_line () = object%js
     val zIndex = 5
     val id = !* "current"
     val label = (object%js
-        val text = !* "Present Moment"
+        val text = !* "now"
     end)
 end
 
+let update_serie chart data interval_s =
+    let update = (object%js
+        val xAxis = Js.Unsafe.obj (Array.of_list [
+            ("plotLines", Js.Unsafe.inject (Js.array (Array.of_list [
+                get_current_time_plot_line ()
+            ])))
+        ])
+        val series = Js.array (Array.of_list [(object%js
+            val data = data
+        end)])
+    end) in
+    chart##update update Js._false;
+    let serie_opt = Js.array_get chart##.series 0 in
+    Js.Optdef.bind serie_opt (fun serie ->
+        serie##addPoint (object%js
+            val x = (new%js Js.date_now)##valueOf
+        end);
+        Js.Optdef.return ())
+
 let set_update_timer this =
     this##.update_cur_timer = Js.Unsafe.global##setInterval (Js.wrap_callback (fun () ->
-        let update = (object%js
-            val xAxis = Js.Unsafe.obj (Array.of_list [
-                ("plotLines", Js.Unsafe.inject (Js.array (Array.of_list [
-                    get_current_time_plot_line ()
-                ])))
-            ])
-            val series = Js.array (Array.of_list [(object%js
-                val data = this##.props##.data
-            end)])
-        end) in
-        this##.chart##update update Js._true;
+        update_serie this##.chart this##.props##.data this##.props##.interval_s
     )) 10000
 
 let clear_update_timer this =
@@ -55,13 +64,15 @@ let chart_factory = (Reactjs.make_class_spec
 
             val yAxis = (object%js
                 val title = (object%js
-                    val text = !* "Number of Messages"
+                    val text = !* "messages"
                 end)
+
+                val allowDecimals = Js._false
             end)
 
             val series = Js.array (Array.of_list [(object%js
                 val data = this##.props##.data
-                val name = !* "Messages"
+                val name = !* "messages"
             end)])
 
             val plotOptions = (object%js
@@ -117,34 +128,23 @@ let chart_factory = (Reactjs.make_class_spec
         ()
     )
     ~component_did_update: (fun ~this ~prev_prop ~prev_state ->
-            let update = (object%js
-                val xAxis = Js.Unsafe.obj (Array.of_list [
-                    ("plotLines", Js.Unsafe.inject (Js.array (Array.of_list [
-                        get_current_time_plot_line ()
-                    ])))
-                ])
-                val series = Js.array (Array.of_list [(object%js
-                    val data = this##.props##.data
-                end)])
-            end) in
-            this##.chart##update update Js._true;
-            ()
+        update_serie this##.chart this##.props##.data this##.props##.interval_s;
+        ()
     )
     (fun ~this ->
         DOM.make
             ~elem_spec: (object%js val ref = !* "chart" end)
             ~tag: `div
             ~class_name: "chart" [
-
-            Text "dddd"
-    ]))
+        ]
+    ))
     |> create_class
     |> create_factory
 
 module Core = struct
     include Frequency_processor.Core
 
-    let render ?title client_state =
+    let render ?title client_state ~config =
         let data = (List.map (fun (time, count) ->
             object%js
                 val x = new%js Js.date_fromTimeValue ((float_of_int time) *. 1000.)
@@ -157,6 +157,7 @@ module Core = struct
         node `div "processor-frequency" [
             Elem (chart_factory ~props: (object%js
                 val data = data
+                val interval_s = config.interval_s
             end))
         ]
 end

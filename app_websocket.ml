@@ -97,7 +97,9 @@ let start ?cert_file ?key_file ~url ~handler () =
         )
         >>| function
             | Ok () -> ()
-            | Error msg -> debug "Error happened"
+            | Error msg ->
+                Int.Table.remove server_inst.sockets id;
+                debug "Error happened"
     in
 
     let determine_mode cert_file_path key_file_path =

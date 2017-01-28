@@ -41,7 +41,7 @@ let attach_handlers ws retry_s connect =
     end
 
 let rec connect retry_s =
-    let ws = get_websocket "ws://192.168.1.157:8081/api" in
+    let ws = get_websocket (App_config.ws_host_client ^ "/api") in
     attach_handlers ws retry_s connect
 
 let () =

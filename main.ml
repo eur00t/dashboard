@@ -50,7 +50,7 @@ let () =
     Log.set_level `Debug;
     read_dump ();
     let ws_server = App_websocket.start
-        ~url: "ws://192.168.1.157:8081/api"
+        ~url: (App_config.ws_host ^ "/api")
         ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server)) in
 
     Sys.set_signal Sys.sigint (Sys.Signal_handle dump);

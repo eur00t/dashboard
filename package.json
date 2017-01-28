@@ -1,0 +1,9 @@
+{
+  "name": "2016-12-06",
+  "dependencies": {
+    "bootstrap": "^4.0.0-alpha.6",
+    "highcharts": "^5.0.7",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
+  }
+}

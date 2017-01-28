@@ -1,3 +1,9 @@
 _build/**
 node_modules/**
 lib/**
+client_main.d.byte
+client_main.d.js
+config.json
+main.native
+public/**
+styles/css/**

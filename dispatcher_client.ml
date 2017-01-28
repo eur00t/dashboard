@@ -6,6 +6,7 @@ module type Processor_client_inst = sig
     val update: Processor.Client.t -> unit
     val update_bus: Processor.Client.t Bus.t
     val client: Processor.Client.t ref
+    val order: int
     val react_class: Reactjs.Low_level_bindings.react_class Js.t
 end;;
 
@@ -92,6 +93,9 @@ module Client = struct
 
     let render t container_id =
         let open Reactjs in
+        let processors = List.sort
+            (fun (_, (module M1: Processor_client_inst)) (_, (module M2: Processor_client_inst)) -> M2.order - M1.order)
+            (Hashtbl.fold (fun name inst res -> (name, inst) :: res) t []) in
         let react_elem =
             make_class_spec
             begin
@@ -103,7 +107,7 @@ module Client = struct
                             Elem (DOM.make
                                 ~tag: `div
                                 ~class_name: "processors-inner"
-                                (Hashtbl.fold (fun name inst res -> (render_processor name inst) :: res) t [])
+                                (List.fold_left (fun res (name, inst) -> (render_processor name inst) :: res) [] processors)
                             )
                         ]
             end
@@ -117,10 +121,12 @@ let create_processor_client_inst
         ?name
         ?title
         (module P: M_p_c.Processor with type config = a)
+        order
         config =
     (module struct
         module Processor = P
-        let client = ref (Processor.Client.create ?name ?title config)
+        let client = ref (Processor.Client.create ?name ?title config order)
+        let order = order
         let update_bus = Bus.create !client
         let update t =
             client := t;
@@ -132,10 +138,17 @@ let create_processor_client_inst
 
 let client = Client.create [
     create_processor_client_inst (module Total_count_processor_client)
+        2
         { interval_s = 60 }
         ~name: "total_minute"
         ~title: "1 minute before the last one";
-    create_processor_client_inst (module Frequency_processor_client) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
+
+    create_processor_client_inst (module Frequency_processor_client)
+        1
+        { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
         ~title: "10min intervals";
-    create_processor_client_inst (module Conversations_processor_client) { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
+
+    create_processor_client_inst (module Conversations_processor_client)
+        0
+        { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
 ]

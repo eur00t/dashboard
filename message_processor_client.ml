@@ -12,7 +12,7 @@ module type Processor = sig
     module Client: sig
         type t
         val print_state: t -> unit
-        val create: ?name: string -> ?title: string -> config -> t
+        val create: ?name: string -> ?title: string -> config -> int -> t
         val get_name: t -> string
         val get_title: t -> string option
     end
@@ -29,6 +29,7 @@ module Make_processor (Core: Processor_core) = struct
         type t = {
             c: config;
             name: string;
+            order: int;
             title: string option;
             state: Core.client_state;
             version: int
@@ -38,11 +39,12 @@ module Make_processor (Core: Processor_core) = struct
             print_string (Yojson.Safe.to_string (Core.client_state_to_yojson t.state));
             flush_all ()
 
-        let create ?name ?title config = {
+        let create ?name ?title config order = {
             c = config;
             name = (match name with
                 | Some str -> str
                 | None -> Core.default_name);
+            order;
             title = title;
             state = Core.client_state_empty config;
             version = 0

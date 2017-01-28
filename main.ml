@@ -50,8 +50,11 @@ let () =
     Log.set_level `Debug;
     read_dump ();
     let ws_server = App_websocket.start
+        ?cert_file: App_config.cert_file
+        ?key_file: App_config.key_file
         ~url: (App_config.ws_host ^ "/api")
-        ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server)) in
+        ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server))
+        () in
 
     Sys.set_signal Sys.sigint (Sys.Signal_handle dump);
     (*let rec poll () =

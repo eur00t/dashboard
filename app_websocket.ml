@@ -28,11 +28,17 @@ let send_all t msg =
                             ~opcode: Opcode.Text
                             ~content: msg ());;
 
-let start ~url ~handler =
+let handler sock ic oc =
+    Reader.pipe ic |> fun rd ->
+    Writer.pipe oc |> fun wr ->
+    Pipe.transfer_id rd wr
+
+let start ?cert_file ?key_file ~url ~handler () =
     let uri = Uri.of_string url in
     let port = Option.value_exn
         ~message: "no port inferred from scheme"
         Uri_services.(tcp_port_of_uri uri) in
+    let host = Uri.host uri in
 
     let rec connection_loop addr_str sender_write receiver_read =
         Pipe.read receiver_read
@@ -89,5 +95,33 @@ let start ~url ~handler =
         Int.Table.remove server_inst.sockets id
     in
 
-    ignore (Tcp.Server.create (Tcp.on_port port) tcp_callback);
+    let determine_mode cert_file_path key_file_path =
+        (* Determines if the server runs in http or https *)
+        match (cert_file_path, key_file_path) with
+            | Some c, Some k -> `OpenSSL (`Crt_file_path c, `Key_file_path k)
+            | None, None -> `TCP
+            | _ -> failwith "Error: must specify both certificate and key for TLS" in
+
+    let start_server port host cert_file key_file () =
+        let mode = determine_mode cert_file key_file in
+        let mode_str = (match mode with `OpenSSL _ -> "OpenSSL" | `TCP -> "TCP") in
+        printf "Listening for %s requests on: %s %d\n%!" mode_str host port;
+        Unix.Inet_addr.of_string_or_getbyname host
+        >>= fun host ->
+        let listen_on = Tcp.Where_to_listen.create
+            ~socket_type:Socket.Type.tcp
+            ~address:(`Inet (host,port))
+            ~listening_on:(fun _ -> port)
+        in
+        Conduit_async.serve
+            ~on_handler_error: `Raise
+            mode
+            listen_on tcp_callback
+        >>= fun _ -> never () in
+
+    (match host with
+        | Some host ->
+            ignore (start_server port host cert_file key_file ())
+        | None -> failwith "Host should be specified");
+
     server_inst;;

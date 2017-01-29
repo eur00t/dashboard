@@ -57,6 +57,9 @@ let () =
         () in
 
     Sys.set_signal Sys.sigint (Sys.Signal_handle dump);
+    Sys.set_signal Sys.sigpipe (Sys.Signal_handle (fun _ ->
+        Log.info "Received SIGPIPE, should ignore";
+    ));
     (*let rec poll () =
         after (Time.Span.of_sec 5.0)
         >>= fun () ->

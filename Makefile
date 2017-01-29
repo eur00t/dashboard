@@ -10,6 +10,7 @@ build:
 	-pkg ppx_here \
 	-pkg ppx_sexp_conv \
 	-pkg websocket \
+	-pkg conduit.async \
 	-pkg websocket.async \
 	main.native
 clean:
@@ -57,7 +58,7 @@ embed_hash:
 build_client: clean_client buildjs_prod buildcss html embed_hash
 
 clean_client:
-	rm -rf public/*
-	mkdir public/cached
+	rm -f public/cached/*
+	rm -f public/index.html
 
 .PHONY: build clean

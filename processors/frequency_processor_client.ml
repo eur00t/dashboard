@@ -19,6 +19,16 @@ let get_current_time_plot_line () = object%js
     end)
 end
 
+let set_current_guide chart interval_s =
+    let serie_opt = Js.array_get chart##.series 0 in
+    Js.Optdef.bind serie_opt (fun serie ->
+        serie##addPoint (object%js
+            val x = (new%js Js.date_now)##valueOf +. ((Js.float_of_number interval_s +. 1.) *. 1000.)
+            val y = 0
+            val id = !* "guide"
+        end);
+        Js.Optdef.return ())
+
 let update_serie chart data interval_s =
     let update = (object%js
         val xAxis = Js.Unsafe.obj (Array.of_list [
@@ -31,14 +41,8 @@ let update_serie chart data interval_s =
         end)])
     end) in
     chart##update update Js._false;
-    let serie_opt = Js.array_get chart##.series 0 in
-    Js.Optdef.bind serie_opt (fun serie ->
-        serie##addPoint (object%js
-            val x = (new%js Js.date_now)##valueOf +. ((Js.float_of_number interval_s +. 1.) *. 1000.)
-            val y = 0
-            val id = !* "guide"
-        end);
-        Js.Optdef.return ())
+    ignore (set_current_guide chart interval_s);
+    ()
 
 let set_update_timer this =
     this##.update_cur_timer = Js.Unsafe.global##setInterval (Js.wrap_callback (fun () ->
@@ -122,6 +126,7 @@ let chart_factory = (Reactjs.make_class_spec
             this##.refs##.chart
             config;
 
+        ignore (set_current_guide this##.chart this##.props##.interval_s);
         ignore (set_update_timer this);
         ()
     )

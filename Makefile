@@ -45,7 +45,7 @@ buildjs_prod:
 		client_main.d.js > public/bundle.js
 
 buildcss:
-	sassc styles/scss/main.scss styles/css/main.css
+	sassc --style compressed styles/scss/main.scss styles/css/main.css
 	cat node_modules/bootstrap/dist/css/bootstrap-reboot.min.css \
 		styles/css/main.css > public/bundle.css
 

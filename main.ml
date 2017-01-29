@@ -24,16 +24,20 @@ let subscribe_dispatcher (module ChatModule: Api_chat.Api_chat) ws_server =
             Dispatcher_server.server
             msg);;
 
-let dump code =
+let dump () =
     try
         let dump_filename = Array.get Sys.argv 1 in
-        Log.debug "Received signal (%d). Saving state to file %s" code dump_filename;
+        Log.debug "Saving state to file %s" dump_filename;
         Dispatcher_server.Server.dump_to_file
             Dispatcher_server.server
             dump_filename;
-        exit 0
     with
-        Invalid_argument _ -> exit 0
+        Invalid_argument _ -> ()
+
+let dump_on_sig code =
+    Log.debug "Received signal (%d)." code;
+    dump ();
+    exit 0
 
 let read_dump () =
     try
@@ -56,7 +60,7 @@ let () =
         ~handler: (Api_types.server_handler ~handler: (Dispatcher_server.Server.process_client_payload Dispatcher_server.server))
         () in
 
-    Sys.set_signal Sys.sigint (Sys.Signal_handle dump);
+    Sys.set_signal Sys.sigint (Sys.Signal_handle dump_on_sig);
     Sys.set_signal Sys.sigpipe (Sys.Signal_handle (fun _ ->
         Log.info "Received SIGPIPE, should ignore";
     ));
@@ -74,4 +78,10 @@ let () =
 
     XxlvChat.start ();
     TestChat.start ();
-    Core.Std.never_returns (Async.Std.Scheduler.go ())
+    try
+        Core.Std.never_returns (Async.Std.Scheduler.go ~raise_unhandled_exn: true ())
+    with
+        exn ->
+            Log.error "Exception in Async scheduler: %s" (Core.Std.Exn.to_string exn);
+            dump ();
+            exit 1

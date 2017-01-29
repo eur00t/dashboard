@@ -143,6 +143,36 @@ let chart_factory = (Reactjs.make_class_spec
     |> create_class
     |> create_factory
 
+let chart_wrap_factory = (Reactjs.make_class_spec
+    ~initial_state: (fun ~this ->
+        object%js
+            val show_chart = Js._false
+        end
+    )
+    (fun ~this ->
+        match Js.to_bool this##.state##.show_chart with
+            | true ->
+                chart_factory ~props: (object%js
+                    val data: Js.Unsafe.any = this##.props##.data
+                    val interval_s: Js.Unsafe.any = this##.props##.interval_s
+                end)
+            | false ->
+                DOM.make
+                    ~elem_spec: (object%js
+                        val onClick = (fun _ ->
+                            this##setState (object%js
+                                val show_chart = Js._true
+                            end)
+                        )
+                    end)
+                    ~tag: `div
+                    ~class_name: "btn toggle-button" [
+                    Text "Show Chart"
+                ]
+    ))
+    |> create_class
+    |> create_factory
+
 module Core = struct
     include Frequency_processor.Core
 
@@ -157,7 +187,7 @@ module Core = struct
         |> Js.array in
 
         node `div "processor-frequency" [
-            Elem (chart_factory ~props: (object%js
+            Elem (chart_wrap_factory ~props: (object%js
                 val data = data
                 val interval_s = config.interval_s
             end))

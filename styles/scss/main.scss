@@ -22,5 +22,20 @@
     }
 }
 
+.btn {
+    border: 2px solid #68a2ff;
+
+    padding: 5px 10px;
+    border-radius: 4px;
+
+    font-weight: bold;
+
+    color: #68a2ff;
+
+    cursor: pointer;
+    display: inline-block;
+}
+
+@import "processor_frequency";
 @import "processor_conversations";
 @import "processor_total_count";

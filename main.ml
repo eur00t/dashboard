@@ -27,7 +27,7 @@ let subscribe_dispatcher (module ChatModule: Api_chat.Api_chat) ws_server =
 let dump () =
     try
         let dump_filename = Array.get Sys.argv 1 in
-        Log.debug "Saving state to file %s" dump_filename;
+        Printf.printf "Saving state to file %s\n" dump_filename;
         Dispatcher_server.Server.dump_to_file
             Dispatcher_server.server
             dump_filename;
@@ -35,7 +35,7 @@ let dump () =
         Invalid_argument _ -> ()
 
 let dump_on_sig code =
-    Log.debug "Received signal (%d)." code;
+    Printf.printf "Received signal (%d).\n" code;
     dump ();
     exit 0
 
@@ -51,7 +51,7 @@ let read_dump () =
         | Sys_error msg -> Log.error "Error while reading dump: %s" msg;;
 
 let () =
-    Log.set_level `Debug;
+    Log.set_level `Info;
     read_dump ();
     let ws_server = App_websocket.start
         ?cert_file: App_config.cert_file
@@ -82,6 +82,6 @@ let () =
         Core.Std.never_returns (Async.Std.Scheduler.go ~raise_unhandled_exn: true ())
     with
         exn ->
-            Log.error "Exception in Async scheduler: %s" (Core.Std.Exn.to_string exn);
+            Printf.printf "Exception in Async scheduler: %s\n" (Core.Std.Exn.to_string exn);
             dump ();
             exit 1

@@ -76,7 +76,7 @@ let start ?cert_file ?key_file ~url ~handler () =
 
     let tcp_callback addr reader writer =
         let addr_str = Socket.Address.(to_string addr) in
-        debug "Client connection from %s, total: %d" addr_str (List.length (Int.Table.keys server_inst.sockets));
+        info "Client connection from %s, total: %d" addr_str (List.length (Int.Table.keys server_inst.sockets));
         let app_to_ws, sender_write = Pipe.create () in
         let receiver_read, ws_to_app = Pipe.create () in
         let inet_addr = match addr with `Inet _ as a -> a in
@@ -99,7 +99,7 @@ let start ?cert_file ?key_file ~url ~handler () =
             | Ok () -> ()
             | Error msg ->
                 Int.Table.remove server_inst.sockets id;
-                debug "Error happened"
+                error "Error happened: %s" (Core.Std.Exn.to_string msg)
     in
 
     let determine_mode cert_file_path key_file_path =
@@ -112,7 +112,7 @@ let start ?cert_file ?key_file ~url ~handler () =
     let start_server port host cert_file key_file () =
         let mode = determine_mode cert_file key_file in
         let mode_str = (match mode with `OpenSSL _ -> "OpenSSL" | `TCP -> "TCP") in
-        debug "Listening for %s requests on: %s %d\n%!" mode_str host port;
+        info "Listening for %s requests on: %s %d\n%!" mode_str host port;
         Unix.Inet_addr.of_string_or_getbyname host
         >>= fun host ->
         let listen_on = Tcp.Where_to_listen.create
@@ -122,7 +122,7 @@ let start ?cert_file ?key_file ~url ~handler () =
         in
         Conduit_async.serve
             ~on_handler_error: (`Call (fun addr except ->
-                debug "Conduit error: %s" (Exn.to_string except);
+                error "Conduit error: %s" (Exn.to_string except);
                 ()))
             mode
             listen_on tcp_callback

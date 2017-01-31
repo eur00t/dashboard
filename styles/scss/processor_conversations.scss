@@ -7,16 +7,6 @@ $conv-line-color: #aaa;
     .conv {
         position: relative;
 
-        &.new-date {
-            > .date {
-                display: block;
-            }
-
-            > ul.users {
-                padding-bottom: 38px;
-            }
-        }
-
         &.point {
             > .time {
                 &.end {
@@ -30,6 +20,20 @@ $conv-line-color: #aaa;
 
             > .line {
                 display: none;
+            }
+
+            > ul.users {
+                padding: 0 0 10px ($conv-users-overlap + 7px);
+            }
+        }
+
+        &.new-date {
+            > .date {
+                display: block;
+            }
+
+            > ul.users {
+                padding-bottom: 38px;
             }
         }
 
@@ -91,7 +95,7 @@ $conv-line-color: #aaa;
 
         > ul.users {
             margin: 0 0 0 $conv-time-width;
-            padding: 0 0 10px ($conv-users-overlap + 7px);
+            padding: 12px 0 26px ($conv-users-overlap + 7px);
 
             border-left: 1px solid $conv-line-color;
 
@@ -158,7 +162,7 @@ $conv-line-color: #aaa;
 
             padding: 0 0 0 5px;
 
-            color: $conv-line-color;
+            color: #68a2ff;
         }
     }
 }

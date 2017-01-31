@@ -40,11 +40,11 @@ $conv-line-color: #aaa;
         &.period {
             > .time {
                 &.end {
-                    top: 0;
+                    top: 7px;
                 }
 
                 &.start {
-                    bottom: 18px;
+                    bottom: 7px;
                 }
             }
         }
@@ -55,8 +55,8 @@ $conv-line-color: #aaa;
             width: 3px;
             left: ($conv-time-width - 1);
 
-            top: 10px;
-            bottom: 28px;
+            top: 17px;
+            bottom: 17px;
 
             background: $conv-line-color;
         }
@@ -95,9 +95,9 @@ $conv-line-color: #aaa;
 
         > ul.users {
             margin: 0 0 0 $conv-time-width;
-            padding: 12px 0 26px ($conv-users-overlap + 7px);
+            padding: 12px 0 8px ($conv-users-overlap + 7px);
 
-            border-left: 1px solid $conv-line-color;
+            border-left: 1px solid lighten($conv-line-color, 20%);
 
             > .user {
                 display: inline-block;

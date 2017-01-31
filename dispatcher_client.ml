@@ -62,6 +62,7 @@ module Client = struct
     let render_processor name (module M: Processor_client_inst) =
         let open Reactjs in
         let open Reactjs.Infix in
+        let open Util_react in
         let title = M.Processor.Client.get_title !M.client in
         Elem (DOM.make
             ~tag: `div
@@ -71,46 +72,36 @@ module Client = struct
             end)
             ((match title with
                 | Some str -> [
-                    Elem (DOM.make
-                        ~tag: `div
-                        ~class_name: "title"
-                        [
-                            Text str
-                        ]
-                    )
+                    el `div "title" [ Text str ]
                 ]
                 | None -> []) @
             [
-                Elem (DOM.make
-                    ~tag: `div
-                    ~class_name: "content"
-                    [
-                        Elem (create_element_from_class M.react_class)
-                    ]
-                )
+                el `div "content" [
+                    Elem (create_element_from_class M.react_class)
+                ]
             ])
         )
 
-    let render t container_id =
+    let render t container_id child_components =
         let open Reactjs in
+        let open Util_react in
         let processors = List.sort
             (fun (_, (module M1: Processor_client_inst)) (_, (module M2: Processor_client_inst)) -> M2.order - M1.order)
             (Hashtbl.fold (fun name inst res -> (name, inst) :: res) t []) in
         let react_elem =
-            make_class_spec
             begin
                 fun ~this ->
-                    DOM.make
-                        ~tag: `div
-                        ~class_name: "processors"
-                        [
-                            Elem (DOM.make
-                                ~tag: `div
-                                ~class_name: "processors-inner"
+                    node `div "main"
+                    ((List.map (fun comp -> Elem (create_element_from_class comp)) child_components)
+                    @
+                    [
+                        el `div "processors" [
+                            el `div "processors-inner"
                                 (List.fold_left (fun res (name, inst) -> (render_processor name inst) :: res) [] processors)
-                            )
                         ]
+                    ])
             end
+            |> make_class_spec
             |> create_class
             |> create_element_from_class in
         render ~react_elem (get_elem ~id: container_id)

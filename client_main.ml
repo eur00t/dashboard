@@ -6,18 +6,44 @@ let retry_initial_s = 10
 
 let log str = Firebug.console##log (Js.string str)
 
+type conn_status = | Connecting | Connected
+
+let render_connection state =
+    let open Util_react in
+    let content, class_name = match state with
+        | Connecting -> [
+            el `div "spinner" [
+                el `div "rect1" [];
+                el `div "rect2" [];
+                el `div "rect3" [];
+                el `div "rect4" [];
+            ];
+            Text "Connecting.."
+        ], "connecting"
+        | Connected -> [
+            Text "LIVE"
+        ], "connected" in
+
+    node `div ("connection-status " ^ class_name) content
+
+let conn_component, conn_bus = Util_react.component_bus
+    ~initial_state: Connecting
+    render_connection
+
 let attach_handlers ws retry_s connect =
     let connected_flag = ref false in
     ws##.onopen := Dom.handler begin
         fun e ->
             connected_flag := true;
             Dispatcher_client.Client.initial_request Dispatcher_client.client ws;
+            Bus.emit conn_bus Connected;
             log "Connected";
             Js._true
     end;
 
     ws##.onclose := Dom.handler begin
         fun e ->
+            Bus.emit conn_bus Connecting;
             log "Disconnected";
             if !connected_flag then begin
                 log "Trying to reconnect immediately";
@@ -50,3 +76,4 @@ let () =
     Dispatcher_client.Client.render
         Dispatcher_client.client
         "container"
+        [conn_component]

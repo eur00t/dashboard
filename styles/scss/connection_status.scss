@@ -1,0 +1,73 @@
+.spinner {
+    width: 23px;
+    height: 12px;
+    text-align: center;
+    font-size: 10px;
+
+    display: inline-block;
+}
+
+.spinner > div {
+    background-color: #333;
+    height: 100%;
+    width: 3px;
+    display: inline-block;
+
+    -webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+    animation: sk-stretchdelay 1.2s infinite ease-in-out;
+
+    margin: 0 1px 0 0;
+}
+
+.spinner .rect2 {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+}
+
+.spinner .rect3 {
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+}
+
+.spinner .rect4 {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+}
+
+.spinner .rect5 {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+}
+
+@-webkit-keyframes sk-stretchdelay {
+    0%, 40%, 100% { -webkit-transform: scaleY(0.4) }
+    20% { -webkit-transform: scaleY(1.0) }
+}
+
+@keyframes sk-stretchdelay {
+    0%, 40%, 100% {
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+    }  20% {
+        transform: scaleY(1.0);
+        -webkit-transform: scaleY(1.0);
+    }
+}
+
+.connection-status {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+
+    padding: 2px 8px;
+    font-size: 14px;
+
+    &.connected {
+        background: #a9e2a9;
+    }
+
+    &.connecting {
+        background: #ffe2ae;
+    }
+}

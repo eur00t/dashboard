@@ -36,6 +36,9 @@
     display: inline-block;
 }
 
+@import "connection_status";
+
+// Processors
 @import "processor_frequency";
 @import "processor_conversations";
 @import "processor_total_count";

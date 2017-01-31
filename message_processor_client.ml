@@ -79,7 +79,7 @@ module Make_processor (Core: Processor_core) = struct
                 fun ~this ->
                     let client = Bus.get_last bus in
                     object%js
-                        val state_str = Json.output client.Client.state
+                        val state_value = Json.output client.Client.state
                     end
             end
             ~component_did_mount: begin
@@ -88,7 +88,7 @@ module Make_processor (Core: Processor_core) = struct
                         fun client ->
                             this##setState (
                                 object%js
-                                    val state_str = Json.output client.Client.state
+                                    val state_value = Json.output client.Client.state
                                 end
                             )
                     )
@@ -100,7 +100,7 @@ module Make_processor (Core: Processor_core) = struct
 
             begin
                 fun ~this ->
-                    Core.render (Json.unsafe_input this##.state##.state_str) ?title ~config: c
+                    Core.render (Json.unsafe_input this##.state##.state_value) ?title ~config: c
 
             end
         |> create_class

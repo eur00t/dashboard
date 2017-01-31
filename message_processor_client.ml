@@ -73,35 +73,8 @@ module Make_processor (Core: Processor_core) = struct
             | Error _ as err -> err
 
     let get_react_class { Client.title; Client.c } bus =
-        let open Reactjs in
-        make_class_spec
-            ~initial_state: begin
-                fun ~this ->
-                    let client = Bus.get_last bus in
-                    object%js
-                        val state_value = Json.output client.Client.state
-                    end
-            end
-            ~component_did_mount: begin
-                fun ~this ->
-                    this##.bus_id := Bus.on bus (
-                        fun client ->
-                            this##setState (
-                                object%js
-                                    val state_value = Json.output client.Client.state
-                                end
-                            )
-                    )
-            end
-            ~component_will_unmount: begin
-                fun ~this ->
-                    Bus.off bus this##.bus_id
-            end
-
-            begin
-                fun ~this ->
-                    Core.render (Json.unsafe_input this##.state##.state_value) ?title ~config: c
-
-            end
-        |> create_class
+        let render_func state =
+            Core.render state.Client.state ?title ~config: c in
+        let component_class, _ = Util_react.component_bus ~bus render_func in
+        component_class
 end

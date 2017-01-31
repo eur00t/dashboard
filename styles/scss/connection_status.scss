@@ -1,3 +1,21 @@
+.connection-status {
+    position: absolute;
+
+    bottom: 0;
+    right: 0;
+
+    padding: 2px 8px;
+    font-size: 14px;
+
+    &.connected {
+        background: #a9e2a9;
+    }
+
+    &.connecting {
+        background: #ffe2ae;
+    }
+}
+
 .spinner {
     width: 23px;
     height: 12px;
@@ -51,23 +69,5 @@
     }  20% {
         transform: scaleY(1.0);
         -webkit-transform: scaleY(1.0);
-    }
-}
-
-.connection-status {
-    position: absolute;
-
-    top: 0;
-    right: 0;
-
-    padding: 2px 8px;
-    font-size: 14px;
-
-    &.connected {
-        background: #a9e2a9;
-    }
-
-    &.connecting {
-        background: #ffe2ae;
     }
 }

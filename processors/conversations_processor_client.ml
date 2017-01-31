@@ -39,11 +39,13 @@ module Core = struct
                 ]
             ]
 
+    let get_time_str value = (U.get_time_str (Unix.localtime (float_of_int value)))
+
     let get_time class_name time_value =
         el `div ("time " ^ class_name) [
             el `div "dot" [];
             el `span "" [
-                Text (U.get_time_str (Unix.localtime (float_of_int time_value)))
+                Text (get_time_str time_value)
             ];
         ]
 
@@ -67,7 +69,7 @@ module Core = struct
         node_key
             `div
             ("conv"
-                ^ (if conv.start = conv.end_ then " point" else " period")
+                ^ (if get_time_str conv.start = get_time_str conv.end_ then " point" else " period")
                 ^ (if (if_new_date prev_conv_opt conv) then " new-date" else ""))
             (string_of_int conv.id)
             [

@@ -57,7 +57,8 @@ let chart_factory = (Reactjs.make_class_spec
         let config = (object%js
             val chart = Js.Unsafe.obj (Array.of_list [
                 ("type", Js.Unsafe.inject !* "area");
-                ("zoomType", Js.Unsafe.inject !* "x")
+                ("zoomType", Js.Unsafe.inject !* "x");
+                ("height", Js.Unsafe.inject 200)
             ])
 
             val xAxis = Js.Unsafe.obj (Array.of_list [

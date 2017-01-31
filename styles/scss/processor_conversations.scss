@@ -27,16 +27,6 @@ $conv-line-color: #aaa;
             }
         }
 
-        &.new-date {
-            > .date {
-                display: block;
-            }
-
-            > ul.users {
-                padding-bottom: 38px;
-            }
-        }
-
         &.period {
             > .time {
                 &.end {
@@ -46,6 +36,26 @@ $conv-line-color: #aaa;
                 &.start {
                     bottom: 14px;
                 }
+            }
+        }
+
+        &.new-date {
+            > .date {
+                display: block;
+            }
+
+            > ul.users {
+                padding-bottom: 38px;
+            }
+
+            > .time {
+                &.start {
+                    bottom: 32px;
+                }
+            }
+
+            > .line {
+                bottom: 42px;
             }
         }
 

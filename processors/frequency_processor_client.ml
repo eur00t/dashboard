@@ -79,6 +79,7 @@ let chart_factory = (Reactjs.make_class_spec
 
             val series = Js.array (Array.of_list [(object%js
                 val data = this##.props##.data
+                val turboThreshold = 0
                 val name = !* "messages"
             end)])
 

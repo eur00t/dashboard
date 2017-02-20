@@ -1,3 +1,17 @@
+Live at https://xxlv.party
+
+## Conversations processor
+
+Groups consequent messages into conversations
+
+[[https://github.com/eur00t/dashboard/tree/master/img/conv.png]]
+
+## Frequency chart processor
+
+Displays timeseries chart, a value at each point specifies a number of messages in some period before point (defined by configuration).
+
+[[https://github.com/eur00t/dashboard/tree/master/img/freq.png]]
+
 ## Setup
 
 1. Add `config.json` to the repo root:

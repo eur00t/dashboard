@@ -2,7 +2,7 @@ Live at https://xxlv.party
 
 ## Conversations processor
 
-Groups consequent messages into conversations
+Groups consecutive messages into conversations
 
 ![conv img](https://github.com/eur00t/dashboard/raw/master/img/conv.png)
 

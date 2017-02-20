@@ -4,13 +4,13 @@ Live at https://xxlv.party
 
 Groups consequent messages into conversations
 
-[[https://github.com/eur00t/dashboard/tree/master/img/conv.png]]
+![conv img](https://github.com/eur00t/dashboard/raw/master/img/conv.png)
 
 ## Frequency chart processor
 
 Displays timeseries chart, a value at each point specifies a number of messages in some period before point (defined by configuration).
 
-[[https://github.com/eur00t/dashboard/tree/master/img/freq.png]]
+![freq img](https://github.com/eur00t/dashboard/raw/master/img/freq.png)
 
 ## Setup
 

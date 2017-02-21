@@ -19,7 +19,8 @@ Displays timeseries chart, a value at each point specifies a number of messages 
         {
             "access_token": "<VK API token with permanent messages access>",
             "api_version": "5.60",
-            "api_url": "https://api.vk.com/method/"
+            "api_url": "https://api.vk.com/method/",
+            "report_email": "<runtime errors will be sent to this address>"
         }
 
 2. Modify `app_config.ml` (if you want TLS).

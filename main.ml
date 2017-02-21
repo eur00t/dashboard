@@ -32,7 +32,7 @@ let dump () =
             Dispatcher_server.server
             dump_filename;
     with
-        Invalid_argument _ -> ()
+        Invalid_argument _ -> ();;
 
 let dump_on_sig code =
     Printf.printf "Received signal (%d).\n" code;
@@ -82,6 +82,8 @@ let () =
         Core.Std.never_returns (Async.Std.Scheduler.go ~raise_unhandled_exn: true ())
     with
         exn ->
-            Printf.printf "Exception in Async scheduler: %s\n" (Core.Std.Exn.to_string exn);
+            let msg = Printf.sprintf "Exception in Async scheduler: %s\n" (Core.Std.Exn.to_string exn) in
+            ignore ((Error_report.report "Async scheduler" msg): int);
+            Printf.printf "%s" msg;
             dump ();
             exit 1

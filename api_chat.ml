@@ -173,6 +173,7 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
             | Ok json -> Yojson.Basic.to_string json
             | Error error -> Error.to_string_hum error)
         >>| fun str ->
+        ignore ((Error_report.report "API" str): int);
         printf "%s" str;;
 
     let start () =

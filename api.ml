@@ -15,7 +15,7 @@ type api_config = {
     access_token: string;
     api_version: string;
     api_url: string
-} [@@deriving of_yojson];;
+} [@@deriving of_yojson { strict = false }];;
 
 module type Api_config_module = sig
     val access_token: string

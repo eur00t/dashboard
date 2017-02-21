@@ -180,6 +180,9 @@ let chart_wrap_factory = (Reactjs.make_class_spec
     |> create_class
     |> create_factory
 
+let slice i arr = Array.sub arr i ((Array.length arr) - i)
+let nlast n arr = slice (max ((Array.length arr) - n) 0) arr
+
 module Core = struct
     include Frequency_processor.Core
 
@@ -191,6 +194,7 @@ module Core = struct
             end
         ) client_state)
         |> Array.of_list
+        |> nlast 500
         |> Js.array in
 
         node `div "processor-frequency" [

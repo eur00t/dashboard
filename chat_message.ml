@@ -35,9 +35,13 @@ let get_last_name msg = msg.last_name;;
 let get_photo msg = msg.photo;;
 
 let fill_user_info ~first_name ~last_name ~photo msg =
+    let photo_ = match (String.sub photo 0 5) with
+        | "https" -> photo
+        | "http:" -> "https" ^ (String.sub photo 4 ((String.length photo) - 4))
+        | _ -> failwith ("Malformed photo URL: " ^ photo) in
     {
         msg with
         first_name = Some first_name;
         last_name = Some last_name;
-        photo = Some photo
+        photo = Some photo_
     }

@@ -47,7 +47,7 @@ module Make_api (Config: Api_config_module): Api_module = struct
             | [] -> uri;;
 
     let add_base_query_params uri =
-        add_query_params [("access_token", Config.access_token); ("v", Config.api_version)] uri;;
+        add_query_params [("https", "1"); ("access_token", Config.access_token); ("v", Config.api_version)] uri;;
 
     let construct_error_str { error_code; error_msg } =
         sprintf "Code: %d\nMessage: %s\n" error_code error_msg;;

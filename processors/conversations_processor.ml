@@ -47,6 +47,7 @@ module Core = struct
         | New_current of conv
         | Update_current of int * (string * int) (* end_, (from, count) *)
         | Add_user_info of string * user_info
+        | Update_user_info of string * user_info
         | Remove_conv of int
         | Remove_user_info of string
         [@@deriving yojson]
@@ -101,7 +102,8 @@ module Core = struct
                     client_state with
                     conv_current = Some conv
                 }
-            | Add_user_info (from, user_info) ->
+            | Add_user_info (from, user_info)
+            | Update_user_info (from, user_info) ->
                 Hashtbl.replace client_state.users_info from user_info;
                 client_state
             | Remove_conv id ->
@@ -114,18 +116,27 @@ module Core = struct
     let update_client_state client_state updates =
         List.fold_left update_client_state_single client_state updates
 
-    let add_user_ref from user_info server_state =
-        if not (U.table_inc server_state.user_refs from)
-        then begin
-            Hashtbl.add server_state.users_info from user_info;
-            server_state, [Add_user_info (from, user_info)]
-        end else
-            server_state, []
+    let add_user_ref from server_state =
+        ignore ((U.table_inc server_state.user_refs from): bool);
+        server_state, []
 
-    let update_current_iter conv time from user_info server_state =
+    let process_user_info from user_info (server_state: server_state) =
+        match U.table_get server_state.users_info from with
+            | Some saved_user_info ->
+                if not (saved_user_info = user_info)
+                then begin
+                    Hashtbl.replace server_state.users_info from user_info;
+                    server_state, [Update_user_info (from, user_info)]
+                end
+                else server_state, []
+            | None ->
+                Hashtbl.add server_state.users_info from user_info;
+                server_state, [Add_user_info (from, user_info)]
+
+    let update_current_iter conv time from server_state =
         let server_state, updates =
             if not (U.table_inc conv.people from) then
-                add_user_ref from user_info server_state
+                add_user_ref from server_state
             else
                 server_state, [] in
         let server_state = {
@@ -190,14 +201,16 @@ module Core = struct
         iterate_updates [
             push_current;
             create_conv time from;
-            add_user_ref from user_info;
+            add_user_ref from;
+            process_user_info from user_info;
             clean_convs decay_s time
         ] server_state
         |> result_updates_to_option
 
     let update_current server_state conv time from user_info decay_s =
         iterate_updates [
-            update_current_iter conv time from user_info;
+            update_current_iter conv time from;
+            process_user_info from user_info;
             clean_convs decay_s time
         ] server_state
         |> result_updates_to_option

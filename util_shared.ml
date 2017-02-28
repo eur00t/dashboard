@@ -58,6 +58,11 @@ let table_dec t key =
         end
     else false
 
+let table_get t key =
+    if Hashtbl.mem t key
+    then Some (Hashtbl.find t key)
+    else None
+
 let filter_some l =
     List.fold_left begin
         fun acc opt ->

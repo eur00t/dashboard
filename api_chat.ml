@@ -55,19 +55,37 @@ module Make_api_chat (Config: Api_chat_config): Api_chat = struct
             | 4 -> Message json
             | _ -> Other json;;
 
-    let user_info_cache = String.Table.create ()
+    module User_info_cache = struct
+        let cache_timeout = 60. *. 5. (* 5 minutes *)
+
+        type t = {
+            response: Yojson.Safe.json;
+            timestamp: float
+        }
+
+        let table = String.Table.create ()
+
+        let get id = match String.Table.find table id with
+            | Some { response; timestamp } ->
+                if (Time.to_epoch (Time.now ())) -. timestamp > cache_timeout
+                    then None
+                    else Some response
+            | None -> None
+
+        let set id response = String.Table.set table ~key: id ~data: {
+            response;
+            timestamp = (Time.to_epoch (Time.now ()))
+        };
+    end
 
     let get_user_info id =
         let open Deferred.Or_error.Monad_infix in
-        match String.Table.find user_info_cache id with
-            | Some response ->
-                Deferred.Or_error.ok_unit
-                >>= fun _ ->
-                return (Ok response)
+        match User_info_cache.get id with
+            | Some response -> return (Ok response)
             | None ->
                 Api.do_request "users.get" [("user_ids", id); ("fields", "photo_50")]
                 >>= fun response ->
-                String.Table.set user_info_cache ~key: id ~data: response;
+                User_info_cache.set id response;
                 return (Ok response)
 
     let fill_user_info msg =

@@ -30,7 +30,10 @@ module Core = struct
             [
                 el `div "photo" [
                     Elem (DOM.make
-                        ~elem_spec: (object%js val src = !* (user_info.photo) end)
+                        ~elem_spec: (object%js
+                            val src = !* (user_info.photo)
+                            val title = !* (user_info.first_name ^ " " ^ user_info.last_name)
+                        end)
                         ~tag: `img
                         [])
                 ];

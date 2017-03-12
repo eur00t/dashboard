@@ -127,7 +127,7 @@ $conv-highlight-color: #68a2ff;
                 @for $i from 0 through 20 {
                     &.order-#{$i} {
                         > .order {
-                            border-top-color: lighten($conv-highlight-color, min(5% * $i, 100%));
+                            border-top-color: lighten($conv-highlight-color, min(6% * $i, 100%));
                             display: block;
                         }
                     }

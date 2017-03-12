@@ -147,5 +147,5 @@ let client = Client.create [
 
     create_processor_client_inst (module Conversations_processor_client)
         0
-        { interval_s = 60 * 10; decay_s = 60 * 60 * 24 }
+        { interval_s = 60 * 10; decay_s = 60 * 60 * 24; history_limit = 1 }
 ]

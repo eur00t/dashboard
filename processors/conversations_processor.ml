@@ -23,6 +23,7 @@ module Core = struct
         start: int;
         end_: int;
         people: (string, int) Hashtbl.t; (* id, msgs_count *)
+        history: string list;
     } [@@deriving yojson]
     type user_info = {
         first_name: string;
@@ -41,11 +42,11 @@ module Core = struct
         conv_current: conv option;
         users_info: (string, user_info) Hashtbl.t;
     } [@@deriving yojson]
-    type config = { interval_s: int; decay_s: int } [@@deriving yojson]
+    type config = { interval_s: int; decay_s: int; history_limit: int; } [@@deriving yojson]
     type update_atom =
         | Push_current
         | New_current of conv
-        | Update_current of int * (string * int) (* end_, (from, count) *)
+        | Update_current of int * string list * (string * int) (* end_, (from, count) *)
         | Add_user_info of string * user_info
         | Update_user_info of string * user_info
         | Remove_conv of int
@@ -79,12 +80,16 @@ module Core = struct
 
     let update_client_state_single client_state update =
         match update with
-            | Update_current (end_, (from, count)) ->
+            | Update_current (end_, history, (from, count)) ->
                 let conv_current =
                 match client_state.conv_current with
                     | Some conv ->
                         Hashtbl.replace conv.people from count;
-                        Some { conv with end_ }
+                        Some {
+                            conv with
+                            end_;
+                            history;
+                        }
                     | None -> None in
                 {
                     client_state with conv_current
@@ -133,21 +138,23 @@ module Core = struct
                 Hashtbl.add server_state.users_info from user_info;
                 server_state, [Add_user_info (from, user_info)]
 
-    let update_current_iter conv time from server_state =
+    let update_current_iter conv time from history_limit server_state =
         let server_state, updates =
             if not (U.table_inc conv.people from) then
                 add_user_ref from server_state
             else
                 server_state, [] in
+        let history = U.list_limit (from :: conv.history) history_limit in
         let server_state = {
             server_state with
             conv_current = Some {
                 conv with
-                end_ = time
+                end_ = time;
+                history;
             }
         } in
         server_state,
-        (Update_current (time, (from, Hashtbl.find conv.people from))) :: updates
+        (Update_current (time, history, (from, Hashtbl.find conv.people from))) :: updates
 
     let create_conv time from (server_state: server_state) =
         let people = Hashtbl.create 10 in
@@ -156,7 +163,8 @@ module Core = struct
             id = get_next_id server_state;
             start = time;
             end_ = time;
-            people
+            people;
+            history = [from]
         } in
         {
             server_state with
@@ -207,24 +215,24 @@ module Core = struct
         ] server_state
         |> result_updates_to_option
 
-    let update_current server_state conv time from user_info decay_s =
+    let update_current server_state conv time from user_info decay_s history_limit =
         iterate_updates [
-            update_current_iter conv time from;
+            update_current_iter conv time from history_limit;
             process_user_info from user_info;
             clean_convs decay_s time
         ] server_state
         |> result_updates_to_option
 
-    let process_message_user_info (server_state: server_state) interval_s decay_s time from user_info =
+    let process_message_user_info (server_state: server_state) interval_s decay_s history_limit time from user_info =
         match server_state.conv_current with
             | Some conv ->
                 if (time - conv.end_) < interval_s
-                then update_current server_state conv time from user_info decay_s
+                then update_current server_state conv time from user_info decay_s history_limit 
                 else add_new_conv server_state time from user_info decay_s
             | None ->
                 add_new_conv server_state time from user_info decay_s
 
-    let process_message (server_state: server_state) { interval_s; decay_s } msg =
+    let process_message (server_state: server_state) { interval_s; decay_s; history_limit } msg =
         let module C = Chat_message in
         let time = C.get_time msg in
         match U.deoption_tuple4 (
@@ -234,7 +242,7 @@ module Core = struct
             C.get_photo msg
         ) with
             | Some (from, first_name, last_name, photo) ->
-                process_message_user_info server_state interval_s decay_s time from {
+                process_message_user_info server_state interval_s decay_s history_limit time from {
                     first_name; last_name; photo
                 }
             | None -> server_state, None

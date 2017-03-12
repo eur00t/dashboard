@@ -2,6 +2,7 @@ $conv-users-overlap: 6px;
 $conv-time-width: 50px;
 $conv-time-dot-size: 5px;
 $conv-line-color: #aaa;
+$conv-order-size: 4px;
 
 .processor-conversations {
     .conv {
@@ -122,6 +123,12 @@ $conv-line-color: #aaa;
                     > .count { display: block; }
                 }
 
+                &.order-0 {
+                    > .order {
+                        display: block;
+                    }
+                } 
+
                 // > .count,
                 > .count.single {
                     display: none;
@@ -137,6 +144,23 @@ $conv-line-color: #aaa;
                     > .photo {
                         border-color: #c0c0c0;
                     }
+                }
+
+                > .order {
+                    display: none;
+
+                    position: absolute;
+                    
+                    top: -$conv-order-size - 1px;
+                    left: 50%;
+                    margin: 0 0 0 (-$conv-order-size);
+
+                    width: 0;
+                    height: 0;
+
+                    border-top: $conv-order-size solid $conv-line-color;
+                    border-left: $conv-order-size solid transparent;
+                    border-right: $conv-order-size solid transparent;
                 }
 
                 > .photo {

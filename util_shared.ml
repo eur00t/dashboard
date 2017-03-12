@@ -27,6 +27,23 @@ module Hashtbl_ext = struct
     let keys t = fold (fun key _ res -> key:: res) t []
 end
 
+let list_limit l limit =
+    let rec proc l limit res =
+        if limit == 0 then res
+        else match l with
+            | h :: t -> proc t (limit - 1) (h :: res)
+            | [] -> res in
+    List.rev (proc l limit [])
+
+let list_find l v =
+    let rec proc l v i =
+        match l with
+            | h :: t ->
+                if h = v then Some i
+                else proc t v (i + 1)
+            | [] -> None in
+    proc l v 0
+
 let queue_to_list q =
     let rec to_list q =
         if Queue.is_empty q then []

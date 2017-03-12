@@ -16,8 +16,13 @@ module Core = struct
             | Gold -> "gold"
             | Silver -> "silver"
             | Normal -> "normal"
+    
+    let order_to_string maybe_order =
+        match maybe_order with
+            | Some order -> "order-" ^ (string_of_int order)
+            | None -> ""
 
-    let render_user badge i id num user_info =
+    let render_user order badge i id num user_info =
         DOM.make
             ~elem_spec: (object%js
                 val key = !* id
@@ -26,8 +31,9 @@ module Core = struct
                 end
             end)
             ~tag: `li
-            ~class_name: ("user" ^ " " ^ (badge_to_string badge))
+            ~class_name: ("user" ^ " " ^ (badge_to_string badge) ^ " " ^ (order_to_string order))
             [
+                el `div "order" [];
                 el `div "photo" [
                     Elem (DOM.make
                         ~elem_spec: (object%js
@@ -82,6 +88,7 @@ module Core = struct
                 el `ul "users"
                     (users
                     |> List.mapi (fun i (id, num) -> Elem (render_user
+                        (U.list_find conv.history id)
                         (match i with
                             | 0 -> Gold
                             | 1 -> Silver

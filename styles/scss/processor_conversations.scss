@@ -3,6 +3,7 @@ $conv-time-width: 50px;
 $conv-time-dot-size: 5px;
 $conv-line-color: #aaa;
 $conv-order-size: 4px;
+$conv-highlight-color: #68a2ff;
 
 .processor-conversations {
     .conv {
@@ -122,12 +123,15 @@ $conv-order-size: 4px;
                 &.gold, &.silver {
                     > .count { display: block; }
                 }
-
-                &.order-0 {
-                    > .order {
-                        display: block;
+                
+                @for $i from 0 through 20 {
+                    &.order-#{$i} {
+                        > .order {
+                            border-top-color: lighten($conv-highlight-color, min(5% * $i, 100%));
+                            display: block;
+                        }
                     }
-                } 
+                }
 
                 // > .count,
                 > .count.single {
@@ -158,7 +162,7 @@ $conv-order-size: 4px;
                     width: 0;
                     height: 0;
 
-                    border-top: $conv-order-size solid $conv-line-color;
+                    border-top: $conv-order-size solid $conv-highlight-color;
                     border-left: $conv-order-size solid transparent;
                     border-right: $conv-order-size solid transparent;
                 }
@@ -196,7 +200,7 @@ $conv-order-size: 4px;
 
             padding: 0 0 0 5px;
 
-            color: #68a2ff;
+            color: $conv-highlight-color;
         }
     }
 }

@@ -144,7 +144,7 @@ module Core = struct
                 add_user_ref from server_state
             else
                 server_state, [] in
-        let history = U.list_limit (from :: conv.history) history_limit in
+        let history = U.list_limit (U.list_cons_dedup from conv.history) history_limit in
         let server_state = {
             server_state with
             conv_current = Some {

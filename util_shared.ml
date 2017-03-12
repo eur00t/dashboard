@@ -33,7 +33,15 @@ let list_limit l limit =
         else match l with
             | h :: t -> proc t (limit - 1) (h :: res)
             | [] -> res in
-    List.rev (proc l limit [])
+    if limit = -1 then l
+    else List.rev (proc l limit [])
+
+let list_cons_dedup el l =
+    let rec proc l el res =
+        match l with
+            | h :: t -> proc t el (if h = el then res else h :: res)
+            | [] -> List.rev res in
+    el :: (proc l el [])
 
 let list_find l v =
     let rec proc l v i =

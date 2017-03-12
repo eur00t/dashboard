@@ -33,6 +33,7 @@ module type Processor = sig
     module Server: sig
         type t
         val create: ?name: string -> config -> t
+        val set_config: t -> config -> t
         val get_name: t -> string
     end
 
@@ -59,6 +60,9 @@ module Make_processor (Core: Processor_core) = struct
             state = Core.server_state_empty config;
             version = 0
         }
+
+        let set_config t config =
+            { t with c = config }
 
         let get_name { name } = name
     end

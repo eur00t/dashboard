@@ -88,7 +88,8 @@ module Core = struct
                 el `ul "users"
                     (users
                     |> List.mapi (fun i (id, num) -> Elem (render_user
-                        (U.list_find conv.history id)
+                        (if (List.length users) < 6 then None
+                         else (U.list_find conv.history id))
                         (match i with
                             | 0 -> Gold
                             | 1 -> Silver

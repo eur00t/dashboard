@@ -40,7 +40,6 @@ module Core = struct
                             el `div "messages" [
                                 Text (string_of_int (last_message_pos - info.message_pos))
                             ];
-                            el `div "arrow" [Text "←"];
                             el `div "timestamp" [
                                 Text (
                                     (U.get_date_str local_timestamp) ^

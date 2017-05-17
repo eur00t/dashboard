@@ -1,0 +1,47 @@
+.processor-last-seen {
+    margin: 0;
+    padding: 0;
+
+    > .user {
+        overflow: auto;
+
+        line-height: 36px;
+        padding: 5px 0 0 0;
+
+        > * {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        > .photo {
+            width: 36px;
+            height: 36px;
+
+            border-radius: 50%;
+            border: 2px solid #dadada;
+
+            overflow: hidden;
+
+            > img {
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        > .timestamp {
+            color: $conv-line-color;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        > .messages {
+            font-family: monospace;
+            font-size: 14px;
+            margin: 0 0 0 5px;
+        }
+
+        > .arrow {
+            margin: 0 10px 0 10px;
+        }
+    }
+}

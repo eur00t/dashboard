@@ -7,6 +7,9 @@ module Core = struct
     type user_info = {
         timestamp: int;
         message_pos: int;
+        photo: string;
+        first_name: string;
+        last_name: string;
     } [@@deriving yojson]
     type server_state = {
         users_info: (string, user_info) Hashtbl.t;
@@ -35,18 +38,25 @@ module Core = struct
         }
 
     let process_message server_state _ msg =
-        let time = Chat_message.get_time msg in
+        let module C = Chat_message in
+        let time = C.get_time msg in
         let last_message_pos = server_state.last_message_pos + 1 in
-        let user_info = {
-            timestamp = time;
-            message_pos = last_message_pos
-        } in
-        match Chat_message.get_from msg with
-            | Some id ->
-                Hashtbl.replace server_state.users_info id user_info;
+        match U.deoption_tuple4 (
+            C.get_from msg,
+            C.get_first_name msg,
+            C.get_last_name msg,
+            C.get_photo msg
+        ) with
+            | Some (from, first_name, last_name, photo) ->
+                let user_info = {
+                    timestamp = time;
+                    message_pos = last_message_pos;
+                    photo; first_name; last_name
+                } in
+                Hashtbl.replace server_state.users_info from user_info;
 
                 { server_state with last_message_pos },
-                Some { user_id = id; user_info; next_last_message_pos = last_message_pos }
+                Some { user_id = from; user_info; next_last_message_pos = last_message_pos }
             | None -> server_state, None
 end
 
